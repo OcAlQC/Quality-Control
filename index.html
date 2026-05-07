@@ -524,11 +524,14 @@ function buildReportHTML(data){
 </body></html>`;
 }
 
-// Build shareable link — compressed base64 using pako, no external service
-function generateLink(){
+// Build shareable link — compressed then optionally shortened
+async function generateLink(){
+  const btn=document.getElementById('share-btn');
+  const st=document.getElementById('pdf-status');
+  btn.textContent='Generating link...';
+  btn.disabled=true;
   try{
     const data=collectReportData();
-    // Short keys to minimize URL length
     const shareData={
       p:data.product,c:data.customer,po:data.po,g:data.grower,
       dt:data.date,loc:data.location,q:data.qty,ls:data.loadSize,
@@ -541,22 +544,32 @@ function generateLink(){
     const json=JSON.stringify(shareData);
     let encoded;
     if(typeof pako!=='undefined'){
-      // Use pako for best compression
       const compressed=pako.deflate(json);
-      let binary='';
-      compressed.forEach(b=>binary+=String.fromCharCode(b));
+      let binary='';compressed.forEach(b=>binary+=String.fromCharCode(b));
       encoded=btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     }else{
-      // Fallback: plain base64
       encoded=btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     }
-    lastReportLink='https://ocalqc.github.io/Quality-Control/view.html?d='+encoded;
+    const longUrl='https://ocalqc.github.io/Quality-Control/view.html?d='+encoded;
+    // Try to shorten with TinyURL (works from browser, blocked from server)
+    let shortUrl=longUrl;
+    try{
+      const resp=await fetch('https://tinyurl.com/api-create.php?url='+encodeURIComponent(longUrl));
+      if(resp.ok){
+        const text=await resp.text();
+        if(text.startsWith('https://tinyurl.com/'))shortUrl=text.trim();
+      }
+    }catch(e){/* use long URL if shortener fails */}
+    lastReportLink=shortUrl;
     document.getElementById('share-sheet').style.display='block';
-    document.getElementById('link-preview').textContent=lastReportLink;
-    document.getElementById('pdf-status').textContent='';
+    document.getElementById('link-preview').textContent=shortUrl;
+    st.textContent='';
   }catch(e){
-    document.getElementById('pdf-status').textContent='Error generating link. Please try again.';
+    st.textContent='Error generating link. Please try again.';
     console.error(e);
+  }finally{
+    btn.textContent='📤 Generate & share report';
+    btn.disabled=false;
   }
 }
 
@@ -564,8 +577,9 @@ function buildShareMessage(link){
   const data=collectReportData();
   const rec=data.recJudgment||'(see report)';
   const product=data.product||'product';
-  const customer=data.customer?(' for '+data.customer):'';
-  return'Birdman QC Report'+customer+'\n\nProduct: '+product+'\nResult: '+rec+'\n\n'+link+'\n\n— '+(data.inspector||'Birdman Trading Co.');
+  const customer=data.customer?(' — '+data.customer):'';
+  const result=rec.includes('Pass')?'✅ '+rec:rec.includes('Fail')?'🚫 '+rec:'⚠️ '+rec;
+  return'*Birdman QC Report'+customer+'*\n'+product+'\n'+result+'\n\n'+link;
 }
 
 function sendWhatsApp(){
