@@ -10,55 +10,162 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px;}
 .spinner{width:36px;height:36px;border:3px solid rgba(12,68,124,0.2);border-top-color:#0C447C;border-radius:50%;animation:spin 0.7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
-.loading-text{font-size:14px;color:#888;}
 .error{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:12px;padding:2rem;text-align:center;}
-.error-title{font-size:18px;font-weight:600;color:#1a1a1a;}
-.error-sub{font-size:14px;color:#888;line-height:1.5;}
-#report-frame{width:100%;border:none;min-height:100vh;display:none;}
+.app{max-width:480px;margin:0 auto;padding:1rem;}
+.card{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;}
+.sl{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;}
+.info-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid rgba(0,0,0,0.07);gap:10px;}
+.info-row:last-child{border-bottom:none;}
+.info-label{font-size:13px;color:#888;flex-shrink:0;}
+.info-val{font-size:13px;font-weight:600;color:#1a1a1a;text-align:right;}
+.defect-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid rgba(0,0,0,0.07);}
+.defect-row:last-child{border-bottom:none;}
+.badge{font-size:13px;font-weight:700;padding:3px 10px;border-radius:20px;}
+.verdict{border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;}
+.verdict-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;}
+.verdict-text{font-size:18px;font-weight:700;}
+.cta{background:#0C447C;border-radius:14px;padding:1.25rem;margin-bottom:1rem;text-align:center;}
 </style>
 </head>
 <body>
 <div class="loading" id="loading">
   <div style="width:44px;height:44px;border-radius:50%;background:#0C447C;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#E6F1FB;text-align:center;line-height:1.2;">BT<br>Co.</div>
   <div class="spinner"></div>
-  <div class="loading-text">Loading inspection report…</div>
+  <div style="font-size:14px;color:#888;">Loading inspection report…</div>
 </div>
+
 <div class="error" id="error" style="display:none;">
   <div style="font-size:36px;">📋</div>
-  <div class="error-title">Report not found</div>
-  <div class="error-sub">This link may have expired or been removed.<br>Contact your inspector for a new report link.</div>
+  <div style="font-size:18px;font-weight:600;">Report not found</div>
+  <div style="font-size:14px;color:#888;line-height:1.5;">This link may be invalid.<br>Contact your inspector for a new report link.</div>
 </div>
-<iframe id="report-frame" title="Inspection Report"></iframe>
+
+<div class="app" id="report" style="display:none;"></div>
 
 <script>
 (async function(){
   const params=new URLSearchParams(window.location.search);
-  const id=params.get('id');
-  if(!id){showError();return;}
+  const encoded=params.get('d');
+  if(!encoded){showError();return;}
+  let data;
   try{
-    const resp=await fetch(`https://jsonblob.com/api/jsonBlob/${id}`,{headers:{'Accept':'application/json'}});
-    if(!resp.ok){showError();return;}
-    const data=await resp.json();
-    if(!data.html){showError();return;}
-    // Render the report HTML in an iframe via srcdoc
-    const frame=document.getElementById('report-frame');
-    frame.srcdoc=data.html;
-    frame.style.display='block';
-    // Auto-resize iframe to content
-    frame.onload=function(){
-      try{
-        const h=frame.contentDocument.body.scrollHeight;
-        frame.style.height=h+'px';
-      }catch(e){frame.style.height='100vh';}
-    };
-    document.getElementById('loading').style.display='none';
-  }catch(e){
-    showError();
-  }
+    const b64=encoded.replace(/-/g,'+').replace(/_/g,'/');
+    const binary=atob(b64);
+    const bytes=new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+    let json;
+    try{
+      const ds=new DecompressionStream('deflate-raw');
+      const writer=ds.writable.getWriter();
+      writer.write(bytes);writer.close();
+      const chunks=[];const reader=ds.readable.getReader();
+      while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value);}
+      const out=new Uint8Array(chunks.reduce((a,c)=>a+c.length,0));
+      let off=0;for(const c of chunks){out.set(c,off);off+=c.length;}
+      json=new TextDecoder().decode(out);
+    }catch(e){
+      json=decodeURIComponent(escape(atob(b64)));
+    }
+    data=JSON.parse(json);
+  }catch(e){showError();return;}
+  renderReport(data);
 })();
+
 function showError(){
   document.getElementById('loading').style.display='none';
   document.getElementById('error').style.display='flex';
+}
+
+function renderReport(d){
+  const recColor=d.recJudgment&&d.recJudgment.includes('Fail')?'#A32D2D':d.recJudgment&&d.recJudgment.includes('Conditional')?'#854F0B':'#27500A';
+  const recBg=d.recJudgment&&d.recJudgment.includes('Fail')?'#FCEBEB':d.recJudgment&&d.recJudgment.includes('Conditional')?'#FAEEDA':'#EAF3DE';
+  const szColor=d.sizeJudgment&&d.sizeJudgment.includes('reject')?'#A32D2D':d.sizeJudgment&&d.sizeJudgment.includes('Borderline')?'#854F0B':'#27500A';
+  const szBg=d.sizeJudgment&&d.sizeJudgment.includes('reject')?'#FCEBEB':d.sizeJudgment&&d.sizeJudgment.includes('Borderline')?'#FAEEDA':'#EAF3DE';
+
+  const infoFields=[
+    ['Customer',d.customer],['PO #',d.po],['Grower / Shipper',d.grower],
+    ['Location',d.location],['Qty inspected',[d.qty,d.loadSize].filter(Boolean).join(' · ')],
+    ['Ordered size',d.orderedSize],['Pack format',d.packFormat],
+    ['Color / maturity',d.colorText],['Pulp temp',d.tempRange],
+    ['Boxes sampled',d.boxCount?`${d.boxCount} box${d.boxCount>1?'es':''}`:'']
+  ].filter(r=>r[1]);
+
+  const defectRows=(d.defectAvgs||[]).map(r=>{
+    const col=r.avg>20?'#A32D2D':r.avg>10?'#854F0B':'#27500A';
+    const bg=r.avg>20?'#FCEBEB':r.avg>10?'#FAEEDA':'#EAF3DE';
+    return`<div class="defect-row"><span style="font-size:14px;">${r.d}</span><span class="badge" style="color:${col};background:${bg};">${r.avg.toFixed(1)}%</span></div>`;
+  }).join('');
+
+  let html=`
+    <div class="card" style="display:flex;align-items:center;gap:12px;">
+      <div style="width:44px;height:44px;border-radius:50%;background:#0C447C;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#E6F1FB;text-align:center;line-height:1.2;flex-shrink:0;">BT<br>Co.</div>
+      <div>
+        <div style="font-size:17px;font-weight:600;">Quality Inspection Report</div>
+        <div style="font-size:12px;color:#888;">Birdman Trading Co. Inc.</div>
+      </div>
+    </div>`;
+
+  if(d.recJudgment){
+    const icon=d.recJudgment.includes('Fail')?'🚫':d.recJudgment.includes('Conditional')?'⚠️':'✅';
+    html+=`<div class="verdict" style="background:${recBg};border:0.5px solid ${recColor}40;">
+      <div><div class="verdict-label" style="color:${recColor};">Overall recommendation</div>
+      <div class="verdict-text" style="color:${recColor};">${d.recJudgment}</div></div>
+      <div style="font-size:32px;">${icon}</div>
+    </div>`;
+  }
+
+  html+=`<div class="card">
+    <div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;">Product</div>
+    <div style="font-size:20px;font-weight:700;margin-bottom:12px;">${d.product||'—'}</div>
+    ${infoFields.map(r=>`<div class="info-row"><span class="info-label">${r[0]}</span><span class="info-val">${r[1]}</span></div>`).join('')}
+  </div>`;
+
+  if(defectRows){
+    html+=`<div class="card"><div class="sl">Defect averages</div>${defectRows}</div>`;
+  }
+
+  if(d.cutTotal>0){
+    const pct=((d.cutHollow/d.cutTotal)*100).toFixed(1);
+    const col=pct>10?'#A32D2D':pct>5?'#854F0B':'#27500A';
+    html+=`<div class="card">
+      <div class="sl">Cut sample — hollow check</div>
+      <div style="font-size:26px;font-weight:700;color:${col};">${pct}% hollow</div>
+      <div style="font-size:13px;color:#888;margin-top:4px;">${d.cutHollow} of ${d.cutTotal} units cut</div>
+    </div>`;
+  }
+
+  if(d.sizeJudgment){
+    html+=`<div style="background:${szBg};border:0.5px solid ${szColor}40;border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;">
+      <div style="font-size:11px;font-weight:600;color:${szColor};text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;">Sizing judgment</div>
+      <div style="font-size:16px;font-weight:700;color:${szColor};">${d.sizeJudgment}</div>
+    </div>`;
+  }
+
+  if(d.notes){
+    html+=`<div class="card">
+      <div class="sl">Inspector notes</div>
+      <div style="font-size:14px;line-height:1.6;white-space:pre-wrap;">${d.notes}</div>
+    </div>`;
+  }
+
+  html+=`<div class="card" style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <div style="font-size:13px;font-weight:600;">${d.inspector||'Inspector'}</div>
+      <div style="font-size:12px;color:#888;">Birdman Trading Co. Inc.</div>
+    </div>
+    <div style="font-size:12px;color:#aaa;">${d.date||''}</div>
+  </div>`;
+
+  html+=`<div class="cta">
+    <div style="font-size:13px;color:#E6F1FB;margin-bottom:4px;opacity:0.8;">Want PDF downloads and full inspection history?</div>
+    <div style="font-size:16px;font-weight:700;color:#fff;">Get the Birdman Portal →</div>
+  </div>`;
+
+  const container=document.getElementById('report');
+  container.innerHTML=html;
+  document.getElementById('loading').style.display='none';
+  container.style.display='block';
+  if(d.product&&d.customer)document.title=`QC Report — ${d.product} — ${d.customer}`;
 }
 </script>
 </body>
