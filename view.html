@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>QC Report — Birdman Trading Co.</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f2f2f0;color:#1a1a1a;}
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px;}
+.spinner{width:36px;height:36px;border:3px solid rgba(12,68,124,0.2);border-top-color:#0C447C;border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:14px;color:#888;}
+.error{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:12px;padding:2rem;text-align:center;}
+.error-title{font-size:18px;font-weight:600;color:#1a1a1a;}
+.error-sub{font-size:14px;color:#888;line-height:1.5;}
+#report-frame{width:100%;border:none;min-height:100vh;display:none;}
+</style>
+</head>
+<body>
+<div class="loading" id="loading">
+  <div style="width:44px;height:44px;border-radius:50%;background:#0C447C;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#E6F1FB;text-align:center;line-height:1.2;">BT<br>Co.</div>
+  <div class="spinner"></div>
+  <div class="loading-text">Loading inspection report…</div>
+</div>
+<div class="error" id="error" style="display:none;">
+  <div style="font-size:36px;">📋</div>
+  <div class="error-title">Report not found</div>
+  <div class="error-sub">This link may have expired or been removed.<br>Contact your inspector for a new report link.</div>
+</div>
+<iframe id="report-frame" title="Inspection Report"></iframe>
+
+<script>
+(async function(){
+  const params=new URLSearchParams(window.location.search);
+  const id=params.get('id');
+  if(!id){showError();return;}
+  try{
+    const resp=await fetch(`https://jsonblob.com/api/jsonBlob/${id}`,{headers:{'Accept':'application/json'}});
+    if(!resp.ok){showError();return;}
+    const data=await resp.json();
+    if(!data.html){showError();return;}
+    // Render the report HTML in an iframe via srcdoc
+    const frame=document.getElementById('report-frame');
+    frame.srcdoc=data.html;
+    frame.style.display='block';
+    // Auto-resize iframe to content
+    frame.onload=function(){
+      try{
+        const h=frame.contentDocument.body.scrollHeight;
+        frame.style.height=h+'px';
+      }catch(e){frame.style.height='100vh';}
+    };
+    document.getElementById('loading').style.display='none';
+  }catch(e){
+    showError();
+  }
+})();
+function showError(){
+  document.getElementById('loading').style.display='none';
+  document.getElementById('error').style.display='flex';
+}
+</script>
+</body>
+</html>
