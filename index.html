@@ -453,7 +453,7 @@ function buildReportHTML(data){
 
   const infoRows=[
     ['Customer',data.customer],['PO #',data.po],['Grower / Shipper',data.grower],
-    ['Location',data.location],['Qty inspected',[data.qty,data.loadSize].filter(Boolean).join(' · ')],
+    ['Location',data.location],['Qty inspected',data.qty],['Label',data.label],
     ['Ordered size',data.orderedSize],['Pack format',data.packFormat],
     ['Color / maturity',data.colorText],['Pulp temp',data.tempRange],
     ['Boxes sampled',data.boxCount?`${data.boxCount} box${data.boxCount>1?'es':''}`:'']]
