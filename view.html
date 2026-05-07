@@ -91,7 +91,7 @@ function renderReport(d){
   const szBg=d.sizeJudgment&&d.sizeJudgment.includes('reject')?'#FCEBEB':d.sizeJudgment&&d.sizeJudgment.includes('Borderline')?'#FAEEDA':'#EAF3DE';
   const infoFields=[
     ['Customer',d.customer],['Order #',d.po],['Destination',d.destination],['PU #',d.pu],['Grower / Shipper',d.grower],
-    ['Location',d.location],['Qty inspected',d.qty],['Label',d.label],
+    ['Location',d.location],['Qty ordered',d.qty],['Label',d.label],
     ['Ordered size',d.orderedSize],['Pack format',d.packFormat],
     ['Color / maturity',d.colorText],['Pulp temp',d.tempRange],
     ['Boxes sampled',d.boxCount?d.boxCount+' box'+(d.boxCount>1?'es':''):'']
