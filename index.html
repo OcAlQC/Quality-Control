@@ -522,25 +522,32 @@ function buildReportHTML(data){
 </body></html>`;
 }
 
-// Save report to JSONBlob and return share URL
+// Encode report data into a URL-safe string (no external service needed)
 async function saveReportToCloud(data){
-  // We store the report HTML via JSONBlob — free, no auth needed
-  const reportHTML=buildReportHTML(data);
-  const payload={html:reportHTML,meta:{product:data.product,customer:data.customer,date:data.date,inspector:data.inspector}};
-  const resp=await fetch('https://jsonblob.com/api/jsonBlob',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','Accept':'application/json'},
-    body:JSON.stringify(payload)
-  });
-  if(!resp.ok)throw new Error('Could not save report');
-  const location=resp.headers.get('Location');
-  if(!location)throw new Error('No location returned');
-  // Extract blob ID from location header
-  const blobId=location.split('/').pop();
-  // We serve the report via a viewer page on the app itself
-  // The viewer reads the blob ID and fetches + renders the HTML
+  // Strip photos from share data — too large for URL
+  const shareData={...data,photoSummary:data.photoSummary};
+  delete shareData.generatedAt;
+  const json=JSON.stringify(shareData);
+  // Compress using CompressionStream (available in modern browsers)
+  let encoded;
+  try{
+    const stream=new CompressionStream('deflate-raw');
+    const writer=stream.writable.getWriter();
+    const encoder=new TextEncoder();
+    writer.write(encoder.encode(json));
+    writer.close();
+    const chunks=[];
+    const reader=stream.readable.getReader();
+    while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value);}
+    const compressed=new Uint8Array(chunks.reduce((a,c)=>a+c.length,0));
+    let offset=0;for(const c of chunks){compressed.set(c,offset);offset+=c.length;}
+    encoded=btoa(String.fromCharCode(...compressed)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }catch(e){
+    // Fallback: just base64 encode without compression
+    encoded=btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }
   const viewerBase='https://ocalqc.github.io/Quality-Control/view.html';
-  return`${viewerBase}?id=${blobId}`;
+  return`${viewerBase}?d=${encoded}`;
 }
 
 async function sendReport(){
