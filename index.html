@@ -187,16 +187,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
   <!-- Action buttons -->
   <button class="gen-btn" onclick="generatePDF()">Download PDF report</button>
-  <button class="send-btn" id="send-btn" onclick="sendReport()">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-    Send report via WhatsApp
-  </button>
+  <button class="gen-btn" id="share-btn" onclick="generateLink()" style="background:#1a1a1a;margin-top:8px;">&#128228; Generate &amp; share report</button>
 
-  <!-- Link box shown after report is generated -->
-  <div class="link-box" id="link-box">
-    <div class="link-box-title">📎 Report link ready</div>
-    <div class="link-url" id="link-url"></div>
-    <button class="copy-btn" onclick="copyLink()">Copy link</button>
+  <!-- Share sheet shown after link is generated -->
+  <div id="share-sheet" style="display:none;background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:14px;padding:1rem 1.25rem;margin-top:8px;">
+    <div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Report link ready &#8212; send via</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button onclick="sendWhatsApp()" style="width:100%;padding:12px;background:#25D366;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;">&#128172; WhatsApp</button>
+      <button onclick="sendSMS()" style="width:100%;padding:12px;background:#0C447C;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;">&#128241; Text message</button>
+      <button onclick="copyLink()" id="copy-btn" style="width:100%;padding:12px;background:#f2f2f0;color:#1a1a1a;border:0.5px solid rgba(0,0,0,0.15);border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;">&#128203; Copy link</button>
+    </div>
+    <div style="font-size:11px;color:#aaa;margin-top:10px;word-break:break-all;" id="link-preview"></div>
   </div>
 
   <div class="status" id="pdf-status"></div>
@@ -522,73 +523,70 @@ function buildReportHTML(data){
 </body></html>`;
 }
 
-// Encode report data into a URL-safe string (no external service needed)
-async function saveReportToCloud(data){
-  // Strip photos from share data — too large for URL
-  const shareData={...data,photoSummary:data.photoSummary};
-  delete shareData.generatedAt;
-  const json=JSON.stringify(shareData);
-  // Compress using CompressionStream (available in modern browsers)
-  let encoded;
-  try{
-    const stream=new CompressionStream('deflate-raw');
-    const writer=stream.writable.getWriter();
-    const encoder=new TextEncoder();
-    writer.write(encoder.encode(json));
-    writer.close();
-    const chunks=[];
-    const reader=stream.readable.getReader();
-    while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value);}
-    const compressed=new Uint8Array(chunks.reduce((a,c)=>a+c.length,0));
-    let offset=0;for(const c of chunks){compressed.set(c,offset);offset+=c.length;}
-    encoded=btoa(String.fromCharCode(...compressed)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-  }catch(e){
-    // Fallback: just base64 encode without compression
-    encoded=btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-  }
-  const viewerBase='https://ocalqc.github.io/Quality-Control/view.html';
-  return`${viewerBase}?d=${encoded}`;
-}
-
-async function sendReport(){
-  const btn=document.getElementById('send-btn');
-  const st=document.getElementById('pdf-status');
-  btn.disabled=true;
-  btn.innerHTML=`<span class="spinner"></span> Generating link...`;
-  st.textContent='';
+// Build shareable link — simple base64, no external service, works offline
+function generateLink(){
   try{
     const data=collectReportData();
-    const link=await saveReportToCloud(data);
-    lastReportLink=link;
-    // Show link box
-    const lb=document.getElementById('link-box');
-    lb.style.display='block';
-    document.getElementById('link-url').textContent=link;
-    // Open WhatsApp with pre-filled message
-    const customer=data.customer||'the customer';
-    const rec=data.recJudgment||'(see report)';
-    const msg=`Hi! Here's the QC inspection report for ${data.product}${data.customer?' — '+customer:''}.\n\n*Result: ${rec}*\n\n${link}\n\n— ${data.inspector||'Birdman QC'}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank');
-    st.textContent='Link ready — WhatsApp opened.';
-    setTimeout(()=>st.textContent='',5000);
-  }catch(err){
-    console.error(err);
-    st.textContent='Could not generate link. Check your connection and try again.';
-  }finally{
-    btn.disabled=false;
-    btn.innerHTML=`<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-    Send report via WhatsApp`;
+    const shareData={
+      product:data.product,customer:data.customer,po:data.po,
+      grower:data.grower,date:data.date,location:data.location,
+      qty:data.qty,loadSize:data.loadSize,inspector:data.inspector,
+      orderedSize:data.orderedSize,packFormat:data.packFormat,
+      colorText:data.colorText,tempRange:data.tempRange,
+      boxCount:data.boxCount,defectAvgs:data.defectAvgs,
+      cutTotal:data.cutTotal,cutHollow:data.cutHollow,
+      sizeJudgment:data.sizeJudgment,recJudgment:data.recJudgment,
+      notes:data.notes
+    };
+    const json=JSON.stringify(shareData);
+    const encoded=btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    lastReportLink='https://ocalqc.github.io/Quality-Control/view.html?d='+encoded;
+    // Show share sheet
+    document.getElementById('share-sheet').style.display='block';
+    document.getElementById('link-preview').textContent=lastReportLink;
+    document.getElementById('pdf-status').textContent='';
+  }catch(e){
+    document.getElementById('pdf-status').textContent='Error generating link. Please try again.';
+    console.error(e);
   }
+}
+
+function buildShareMessage(link){
+  const data=collectReportData();
+  const rec=data.recJudgment||'(see report)';
+  const product=data.product||'product';
+  const customer=data.customer?(' for '+data.customer):'';
+  return'Birdman QC Report'+customer+'\n\nProduct: '+product+'\nResult: '+rec+'\n\n'+link+'\n\n— '+(data.inspector||'Birdman Trading Co.');
+}
+
+function sendWhatsApp(){
+  if(!lastReportLink){generateLink();return;}
+  const msg=buildShareMessage(lastReportLink);
+  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
+}
+
+function sendSMS(){
+  if(!lastReportLink){generateLink();return;}
+  const msg=buildShareMessage(lastReportLink);
+  window.open('sms:?body='+encodeURIComponent(msg));
 }
 
 function copyLink(){
-  if(!lastReportLink)return;
+  if(!lastReportLink){generateLink();return;}
   navigator.clipboard.writeText(lastReportLink).then(()=>{
-    const btn=document.querySelector('.copy-btn');
-    btn.textContent='Copied!';
-    setTimeout(()=>btn.textContent='Copy link',2000);
+    const btn=document.getElementById('copy-btn');
+    if(btn){btn.textContent='Copied!';setTimeout(()=>btn.textContent='\u{1F4CB} Copy link',2000);}
+  }).catch(()=>{
+    // Fallback for older browsers
+    const ta=document.createElement('textarea');
+    ta.value=lastReportLink;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');document.body.removeChild(ta);
+    const btn=document.getElementById('copy-btn');
+    if(btn){btn.textContent='Copied!';setTimeout(()=>btn.textContent='\u{1F4CB} Copy link',2000);}
   });
 }
+
+
 
 async function generatePDF(){
   const st=document.getElementById('pdf-status');
