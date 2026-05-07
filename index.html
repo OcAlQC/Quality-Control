@@ -580,9 +580,10 @@ function buildShareMessage(link){
   const data=collectReportData();
   const rec=data.recJudgment||'(see report)';
   const product=data.product||'product';
-  const customer=data.customer?(' — '+data.customer):'';
+  const customer=data.customer?' — '+data.customer:'';
   const result=rec.includes('Pass')?'✅ '+rec:rec.includes('Fail')?'🚫 '+rec:'⚠️ '+rec;
-  return'*Birdman QC Report'+customer+'*\n'+product+'\n'+result+'\n\n'+link;
+  const puLine=[data.pu?'PU# '+data.pu:'',data.destination].filter(Boolean).join(' · ');
+  return'*Birdman QC Report'+customer+'*'+(puLine?'\n'+puLine:'')+'\n\nProduct: '+product+'\nResult: '+result+'\n\n'+link;
 }
 
 function sendWhatsApp(){
