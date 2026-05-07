@@ -70,7 +70,7 @@ function normalize(r){
   if(r.product)return r; // old format, already long keys
   return{
     product:r.p||'',customer:r.c||'',po:r.po||'',pu:r.pu||'',destination:r.dest||'',grower:r.g||'',
-    date:r.dt||'',location:r.loc||'',qty:r.q||'',
+    date:r.dt||'',location:r.loc||'',qty:r.q||'',label:r.lbl||'',
     inspector:r.ins||'',orderedSize:r.os||'',packFormat:r.pf||'',
     colorText:r.ct||'',tempRange:r.tr||'',boxCount:r.bc||0,
     defectAvgs:(r.da||[]).map(x=>({d:x.d,avg:x.a})),
@@ -91,7 +91,7 @@ function renderReport(d){
   const szBg=d.sizeJudgment&&d.sizeJudgment.includes('reject')?'#FCEBEB':d.sizeJudgment&&d.sizeJudgment.includes('Borderline')?'#FAEEDA':'#EAF3DE';
   const infoFields=[
     ['Customer',d.customer],['Order #',d.po],['Destination',d.destination],['PU #',d.pu],['Grower / Shipper',d.grower],
-    ['Location',d.location],['Qty inspected',d.qty],
+    ['Location',d.location],['Qty inspected',d.qty],['Label',d.label],
     ['Ordered size',d.orderedSize],['Pack format',d.packFormat],
     ['Color / maturity',d.colorText],['Pulp temp',d.tempRange],
     ['Boxes sampled',d.boxCount?d.boxCount+' box'+(d.boxCount>1?'es':''):'']
