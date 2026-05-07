@@ -19,7 +19,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .fr{margin-bottom:10px;}
 .fr label{display:block;font-size:13px;color:#555;margin-bottom:4px;}
 .fr input,.fr select,.fr textarea{width:100%;padding:9px 11px;border:0.5px solid rgba(0,0,0,0.18);border-radius:9px;font-size:14px;background:#fff;color:#1a1a1a;font-family:inherit;-webkit-appearance:none;}
-.fr textarea{resize:vertical;min-height:64px;}
+.fr textarea{resize:vertical;min-height:160px;}
 .g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:10px;}
 .prod-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;}
 .pb{padding:8px 13px;border-radius:9px;border:0.5px solid rgba(0,0,0,0.18);background:#fff;font-size:13px;cursor:pointer;color:#555;font-family:inherit;}
@@ -95,21 +95,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="card">
     <div class="sl">Job info</div>
     <div class="g2">
-      <div class="fr"><label>Customer</label><input type="text" id="customer" placeholder="e.g. Smart & Final"/></div>
-      <div class="fr"><label>PO #</label><input type="text" id="po" placeholder="e.g. PO-4481"/></div>
+      <div class="fr"><label>Customer</label><input type="text" id="customer" placeholder="e.g. Crown City"/></div>
+      <div class="fr"><label>Order #</label><input type="text" id="po" placeholder="e.g. PO-4481"/></div>
     </div>
+    <div class="fr"><label>Destination</label><input type="text" id="destination" placeholder="e.g. Smart & Final, Phoenix AZ"/></div>
     <div class="g2">
       <div class="fr"><label>Grower / shipper</label><input type="text" id="grower" placeholder="e.g. Del Campo"/></div>
-      <div class="fr"><label>Date</label><input type="date" id="insp-date"/></div>
+      <div class="fr"><label>PU #</label><input type="text" id="pu" placeholder="e.g. PU-1234"/></div>
     </div>
     <div class="fr"><label>Warehouse / location</label><input type="text" id="location" placeholder="e.g. Nogales Cold Storage, AZ"/></div>
-    <div class="g2">
-      <div class="fr"><label>Qty inspected</label><input type="text" id="qty" placeholder="e.g. 44 pallets"/></div>
-      <div class="fr"><label>Load size</label>
-        <select id="load-size"><option>Full truckload</option><option>Half load</option><option>Pallet(s)</option><option>Custom</option></select>
+    <div class="fr"><label>Qty inspected</label>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input type="number" id="qty-num" placeholder="e.g. 200" min="0" style="width:100px;"/>
+        <span style="font-size:14px;color:#555;">cases</span>
       </div>
     </div>
     <div class="fr"><label>Inspector name</label><input type="text" id="inspector-name" placeholder="e.g. Tavo G."/></div>
+    <div class="fr"><label>Date</label><input type="date" id="insp-date"/></div>
   </div>
 
   <div class="card" id="size-card">
@@ -183,7 +185,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
   <div class="card">
     <div class="sl">Inspector notes</div>
-    <textarea id="notes" placeholder="Overall observations, special conditions, anything the customer should know..."></textarea>
+    <textarea id="notes" placeholder="Overall observations, special conditions, anything the customer should know..." style="width:100%;min-height:160px;"></textarea>
   </div>
 
   <!-- Action buttons -->
@@ -405,11 +407,12 @@ function collectReportData(){
     productKey:curProd,
     customer:document.getElementById('customer').value,
     po:document.getElementById('po').value,
+    pu:document.getElementById('pu').value,
+    destination:document.getElementById('destination').value,
     grower:document.getElementById('grower').value,
     date:document.getElementById('insp-date').value,
     location:document.getElementById('location').value,
-    qty:document.getElementById('qty').value,
-    loadSize:document.getElementById('load-size').value,
+    qty:(document.getElementById('qty-num').value?document.getElementById('qty-num').value+' cases':''),
     inspector:document.getElementById('inspector-name').value,
     orderedSize:szBtn?szBtn.textContent.replace(/\s+/g,' ').trim():'',
     packFormat:curProd==='strawberry'?document.getElementById('pack-fmt').value:'',
@@ -533,8 +536,8 @@ async function generateLink(){
   try{
     const data=collectReportData();
     const shareData={
-      p:data.product,c:data.customer,po:data.po,g:data.grower,
-      dt:data.date,loc:data.location,q:data.qty,ls:data.loadSize,
+      p:data.product,c:data.customer,po:data.po,pu:data.pu,dest:data.destination,g:data.grower,
+      dt:data.date,loc:data.location,q:data.qty,
       ins:data.inspector,os:data.orderedSize,pf:data.packFormat,
       ct:data.colorText,tr:data.tempRange,bc:data.boxCount,
       da:(data.defectAvgs||[]).map(r=>({d:r.d,a:parseFloat(r.avg.toFixed(1))})),
@@ -637,11 +640,13 @@ async function generatePDF(){
     const prod=curProd==='custom'?(document.getElementById('custom-name').value||'Custom product'):{tomato:'Roma tomatoes',cucumber:'Slicer cucumber',strawberry:'Strawberry'}[curProd];
     irow('Product',prod);
     irow('Customer',document.getElementById('customer').value);
-    irow('PO number',document.getElementById('po').value);
+    irow('Order #',document.getElementById('po').value);
+    irow('Destination',document.getElementById('destination').value);
+    irow('PU #',document.getElementById('pu').value);
     irow('Grower / shipper',document.getElementById('grower').value);
     irow('Location',document.getElementById('location').value);
-    const qty=document.getElementById('qty').value,ls=document.getElementById('load-size').value;
-    irow('Qty inspected',[qty,ls].filter(Boolean).join(' · '));
+    const qtyNum=document.getElementById('qty-num').value;
+    irow('Qty inspected',qtyNum?qtyNum+' cases':'');
     const szBtn=document.querySelector('.sz-btn.active');
     if(szBtn)irow('Ordered size',szBtn.textContent.replace(/\s+/g,' ').trim());
     if(curProd==='strawberry')irow('Pack format',document.getElementById('pack-fmt').value);
