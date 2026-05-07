@@ -49,6 +49,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .temp-entry input{width:100px;padding:7px 9px;border:0.5px solid rgba(0,0,0,0.18);border-radius:9px;font-size:14px;background:#fff;color:#1a1a1a;font-family:inherit;}
 .gen-btn{width:100%;padding:14px;background:#0C447C;color:#E6F1FB;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;margin-top:4px;font-family:inherit;}
 .gen-btn:active{opacity:0.85;}
+.send-btn{width:100%;padding:14px;background:#25D366;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;margin-top:8px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;}
+.send-btn:active{opacity:0.85;}
+.send-btn:disabled{background:#ccc;cursor:not-allowed;}
+.link-box{background:#EAF3FB;border:0.5px solid #0C447C;border-radius:12px;padding:12px 14px;margin-top:8px;display:none;}
+.link-box-title{font-size:11px;font-weight:600;color:#0C447C;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.link-url{font-size:12px;color:#185FA5;word-break:break-all;margin-bottom:8px;line-height:1.5;}
+.copy-btn{padding:7px 14px;background:#0C447C;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+.copy-btn:active{opacity:0.8;}
 .hid{display:none;}
 .photo-sec{margin-bottom:14px;}
 .photo-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
@@ -58,6 +66,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .add-ph{width:64px;height:64px;border-radius:9px;border:0.5px dashed rgba(0,0,0,0.2);background:none;font-size:10px;color:#888;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-family:inherit;flex-shrink:0;}
 .status{text-align:center;font-size:13px;color:#888;margin-top:10px;min-height:18px;}
 .rm-btn{border:none;background:none;color:#aaa;font-size:12px;cursor:pointer;font-family:inherit;padding:2px 6px;}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
@@ -175,7 +185,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <textarea id="notes" placeholder="Overall observations, special conditions, anything the customer should know..."></textarea>
   </div>
 
+  <!-- Action buttons -->
   <button class="gen-btn" onclick="generatePDF()">Download PDF report</button>
+  <button class="send-btn" id="send-btn" onclick="sendReport()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+    Send report via WhatsApp
+  </button>
+
+  <!-- Link box shown after report is generated -->
+  <div class="link-box" id="link-box">
+    <div class="link-box-title">📎 Report link ready</div>
+    <div class="link-url" id="link-url"></div>
+    <button class="copy-btn" onclick="copyLink()">Copy link</button>
+  </div>
+
   <div class="status" id="pdf-status"></div>
 </div>
 
@@ -211,6 +234,7 @@ const COLOR_LABELS={'1':'Full green','1.5':'Slight turn','2':'Breaker','2.5':'Tu
 const STAGES=['1','1.5','2','2.5','3','3.5','4','4.5','5','5.5'];
 const PHOTO_SECS=['Load / packaging','Product condition','Defects','Temperature','Additional'];
 let curProd='tomato',boxCount=0,boxes=[],selectedColors=new Set(),photoData={},sizeJudgment='',recJudgment='';
+let lastReportLink='';
 PHOTO_SECS.forEach(s=>photoData[s]=[]);
 document.getElementById('insp-date').value=new Date().toISOString().split('T')[0];
 
@@ -354,6 +378,209 @@ function setJ(type,val,btn){
   btn.classList.add(cls);
   if(type==='size')sizeJudgment=labels.size[val];
   if(type==='rec')recJudgment=labels.rec[val];
+}
+
+// Collect all report data into an object
+function collectReportData(){
+  const prod=curProd==='custom'?(document.getElementById('custom-name').value||'Custom product'):{tomato:'Roma tomatoes',cucumber:'Slicer cucumber',strawberry:'Strawberry'}[curProd];
+  const szBtn=document.querySelector('.sz-btn.active');
+  const tempVals=[...document.querySelectorAll('#temp-readings input')].map(i=>parseFloat(i.value)).filter(v=>!isNaN(v));
+  const valid=boxes.filter(b=>b.total>0);
+  const defectAvgs=PRODS[curProd].defects.map(d=>{
+    const avg=valid.reduce((s,b)=>s+(b.total>0?(b.defects[d]||0)/b.total*100:0),0)/(valid.length||1);
+    return{d,avg};
+  }).filter(r=>r.avg>0);
+  const sorted=STAGES.filter(s=>selectedColors.has(s));
+  let colorText='';
+  if(sorted.length){const mn=sorted[0],mx=sorted[sorted.length-1];colorText=mn===mx?`Color ${mn} — ${COLOR_LABELS[mn]}`:`Color ${mn}–${mx} (${COLOR_LABELS[mn]} to ${COLOR_LABELS[mx]})`;}
+  const ct=parseInt(document.getElementById('cut-total').value)||0;
+  const ch=parseInt(document.getElementById('cut-hollow').value)||0;
+  // Strip photos (too large for link)
+  const photoSummary={};
+  PHOTO_SECS.forEach(s=>photoSummary[s]=photoData[s].length);
+  return{
+    product:prod,
+    productKey:curProd,
+    customer:document.getElementById('customer').value,
+    po:document.getElementById('po').value,
+    grower:document.getElementById('grower').value,
+    date:document.getElementById('insp-date').value,
+    location:document.getElementById('location').value,
+    qty:document.getElementById('qty').value,
+    loadSize:document.getElementById('load-size').value,
+    inspector:document.getElementById('inspector-name').value,
+    orderedSize:szBtn?szBtn.textContent.replace(/\s+/g,' ').trim():'',
+    packFormat:curProd==='strawberry'?document.getElementById('pack-fmt').value:'',
+    colorText,
+    tempVals,
+    tempRange:tempVals.length?(Math.min(...tempVals)===Math.max(...tempVals)?`${Math.min(...tempVals)}°F`:`${Math.min(...tempVals)}–${Math.max(...tempVals)}°F`):'',
+    boxCount:valid.length,
+    defectAvgs,
+    cutTotal:ct,
+    cutHollow:ch,
+    sizeJudgment,
+    recJudgment,
+    notes:document.getElementById('notes').value,
+    photoSummary,
+    generatedAt:new Date().toISOString()
+  };
+}
+
+// Build the shareable HTML report page as a string
+function buildReportHTML(data){
+  const recColor=data.recJudgment.includes('Fail')?'#A32D2D':data.recJudgment.includes('Conditional')?'#854F0B':'#27500A';
+  const recBg=data.recJudgment.includes('Fail')?'#FCEBEB':data.recJudgment.includes('Conditional')?'#FAEEDA':'#EAF3DE';
+  const szColor=data.sizeJudgment.includes('reject')?'#A32D2D':data.sizeJudgment.includes('Borderline')?'#854F0B':'#27500A';
+  const szBg=data.sizeJudgment.includes('reject')?'#FCEBEB':data.sizeJudgment.includes('Borderline')?'#FAEEDA':'#EAF3DE';
+
+  const defectRows=data.defectAvgs.map(r=>{
+    const col=r.avg>20?'#A32D2D':r.avg>10?'#854F0B':'#27500A';
+    const bg=r.avg>20?'#FCEBEB':r.avg>10?'#FAEEDA':'#EAF3DE';
+    return`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid rgba(0,0,0,0.07);">
+      <span style="font-size:14px;color:#1a1a1a;">${r.d}</span>
+      <span style="font-size:13px;font-weight:700;color:${col};background:${bg};padding:3px 10px;border-radius:20px;">${r.avg.toFixed(1)}%</span>
+    </div>`;
+  }).join('');
+
+  const infoRows=[
+    ['Customer',data.customer],['PO #',data.po],['Grower / Shipper',data.grower],
+    ['Location',data.location],['Qty inspected',[data.qty,data.loadSize].filter(Boolean).join(' · ')],
+    ['Ordered size',data.orderedSize],['Pack format',data.packFormat],
+    ['Color / maturity',data.colorText],['Pulp temp',data.tempRange],
+    ['Boxes sampled',data.boxCount?`${data.boxCount} box${data.boxCount>1?'es':''}`:'']]
+    .filter(r=>r[1])
+    .map(r=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid rgba(0,0,0,0.07);gap:10px;">
+      <span style="font-size:13px;color:#888;flex-shrink:0;">${r[0]}</span>
+      <span style="font-size:13px;font-weight:600;color:#1a1a1a;text-align:right;">${r[1]}</span>
+    </div>`).join('');
+
+  const cutHtml=data.cutTotal>0?`
+    <div style="background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;">
+      <div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Cut sample — hollow check</div>
+      <div style="font-size:22px;font-weight:700;color:#185FA5;">${((data.cutHollow/data.cutTotal)*100).toFixed(1)}% hollow</div>
+      <div style="font-size:13px;color:#888;margin-top:4px;">${data.cutHollow} of ${data.cutTotal} units cut</div>
+    </div>`:'';
+
+  const notesHtml=data.notes?`
+    <div style="background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;">
+      <div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Inspector notes</div>
+      <div style="font-size:14px;color:#1a1a1a;line-height:1.6;white-space:pre-wrap;">${data.notes}</div>
+    </div>`:'';
+
+  return`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>QC Report — ${data.product} — ${data.customer||'Birdman'}</title>
+<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f2f2f0;color:#1a1a1a;}</style>
+</head><body>
+<div style="max-width:480px;margin:0 auto;padding:1rem;">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;padding:1rem 1.25rem;background:#fff;border-radius:14px;border:0.5px solid rgba(0,0,0,0.1);">
+    <div style="width:44px;height:44px;border-radius:50%;background:#0C447C;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#E6F1FB;text-align:center;line-height:1.2;flex-shrink:0;">BT<br>Co.</div>
+    <div>
+      <div style="font-size:17px;font-weight:600;">Quality Inspection Report</div>
+      <div style="font-size:12px;color:#888;">Birdman Trading Co. Inc.</div>
+    </div>
+  </div>
+
+  ${data.recJudgment?`<div style="background:${recBg};border:0.5px solid ${recColor}40;border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <div style="font-size:11px;font-weight:600;color:${recColor};text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;">Overall recommendation</div>
+      <div style="font-size:18px;font-weight:700;color:${recColor};">${data.recJudgment}</div>
+    </div>
+    <div style="font-size:28px;">${data.recJudgment.includes('Fail')?'🚫':data.recJudgment.includes('Conditional')?'⚠️':'✅'}</div>
+  </div>`:''}
+
+  <div style="background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;">
+    <div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;">Product</div>
+    <div style="font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:12px;">${data.product}</div>
+    ${infoRows}
+  </div>
+
+  ${data.defectAvgs.length?`<div style="background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;">
+    <div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Defect averages</div>
+    ${defectRows}
+  </div>`:''}
+
+  ${cutHtml}
+
+  ${data.sizeJudgment?`<div style="background:${szBg};border:0.5px solid ${szColor}40;border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;">
+    <div style="font-size:11px;font-weight:600;color:${szColor};text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;">Sizing judgment</div>
+    <div style="font-size:16px;font-weight:700;color:${szColor};">${data.sizeJudgment}</div>
+  </div>`:''}
+
+  ${notesHtml}
+
+  <div style="background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;">
+    <div style="font-size:12px;color:#888;">${data.inspector||'Inspector'} · Birdman Trading Co. Inc.</div>
+    <div style="font-size:12px;color:#aaa;margin-top:2px;">${data.date}</div>
+  </div>
+
+  <!-- Portal CTA -->
+  <div style="background:#0C447C;border-radius:14px;padding:1.25rem;margin-bottom:1rem;text-align:center;">
+    <div style="font-size:13px;color:#E6F1FB;margin-bottom:4px;opacity:0.8;">Want PDF downloads and full inspection history?</div>
+    <div style="font-size:16px;font-weight:700;color:#fff;">Get the Birdman Portal →</div>
+  </div>
+</div>
+</body></html>`;
+}
+
+// Save report to JSONBlob and return share URL
+async function saveReportToCloud(data){
+  // We store the report HTML via JSONBlob — free, no auth needed
+  const reportHTML=buildReportHTML(data);
+  const payload={html:reportHTML,meta:{product:data.product,customer:data.customer,date:data.date,inspector:data.inspector}};
+  const resp=await fetch('https://jsonblob.com/api/jsonBlob',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify(payload)
+  });
+  if(!resp.ok)throw new Error('Could not save report');
+  const location=resp.headers.get('Location');
+  if(!location)throw new Error('No location returned');
+  // Extract blob ID from location header
+  const blobId=location.split('/').pop();
+  // We serve the report via a viewer page on the app itself
+  // The viewer reads the blob ID and fetches + renders the HTML
+  const viewerBase='https://ocalqc.github.io/Quality-Control/view.html';
+  return`${viewerBase}?id=${blobId}`;
+}
+
+async function sendReport(){
+  const btn=document.getElementById('send-btn');
+  const st=document.getElementById('pdf-status');
+  btn.disabled=true;
+  btn.innerHTML=`<span class="spinner"></span> Generating link...`;
+  st.textContent='';
+  try{
+    const data=collectReportData();
+    const link=await saveReportToCloud(data);
+    lastReportLink=link;
+    // Show link box
+    const lb=document.getElementById('link-box');
+    lb.style.display='block';
+    document.getElementById('link-url').textContent=link;
+    // Open WhatsApp with pre-filled message
+    const customer=data.customer||'the customer';
+    const rec=data.recJudgment||'(see report)';
+    const msg=`Hi! Here's the QC inspection report for ${data.product}${data.customer?' — '+customer:''}.\n\n*Result: ${rec}*\n\n${link}\n\n— ${data.inspector||'Birdman QC'}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,'_blank');
+    st.textContent='Link ready — WhatsApp opened.';
+    setTimeout(()=>st.textContent='',5000);
+  }catch(err){
+    console.error(err);
+    st.textContent='Could not generate link. Check your connection and try again.';
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML=`<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+    Send report via WhatsApp`;
+  }
+}
+
+function copyLink(){
+  if(!lastReportLink)return;
+  navigator.clipboard.writeText(lastReportLink).then(()=>{
+    const btn=document.querySelector('.copy-btn');
+    btn.textContent='Copied!';
+    setTimeout(()=>btn.textContent='Copy link',2000);
+  });
 }
 
 async function generatePDF(){
