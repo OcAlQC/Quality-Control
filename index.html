@@ -411,9 +411,9 @@ function openJob(id){
   document.getElementById('qty-num').value = job.qty || '';
   document.getElementById('label').value = job.label || '';
   document.getElementById('insp-date').value = job.date || new Date().toISOString().split('T')[0];
-  // Restore saved inspection data if any
+  // Restore full inspection state if saved
   if(job.inspectionData){
-    restoreInspectionData(job.inspectionData);
+    restoreFullInspectionState(job.inspectionData);
   }
   // Update header to show which job is open
   document.getElementById('inspect-title').textContent = job.customer;
@@ -427,6 +427,101 @@ function restoreInspectionData(d){
   if(d.notes) document.getElementById('notes').value = d.notes;
   if(d.qty) document.getElementById('qty-num').value = d.qty.replace(' cases','');
   if(d.label) document.getElementById('label').value = d.label || '';
+}
+
+function captureFullInspectionState(){
+  // Capture temperatures
+  const temps=[...document.querySelectorAll('#temp-readings input')].map(i=>parseFloat(i.value)).filter(v=>!isNaN(v));
+  // Capture all box samples with defect values
+  const boxData=boxes.map(b=>{
+    const defectInputs={};
+    document.querySelectorAll(`[data-box="${b.id}"]`).forEach(inp=>{
+      defectInputs[inp.dataset.defect]=parseInt(inp.value)||0;
+    });
+    return{id:b.id,total:parseInt(document.getElementById('tot-'+b.id)?.value)||0,defects:defectInputs};
+  });
+  // Capture selected size button
+  const szBtn=document.querySelector('.sz-btn.active');
+  // Capture cut sample
+  const cutTotal=parseInt(document.getElementById('cut-total')?.value)||0;
+  const cutHollow=parseInt(document.getElementById('cut-hollow')?.value)||0;
+  // Capture photos — store full base64
+  const savedPhotos={};
+  PHOTO_SECS.forEach(s=>savedPhotos[s]=[...photoData[s]]);
+  return{
+    product:curProd,
+    customName:document.getElementById('custom-name')?.value||'',
+    notes:document.getElementById('notes').value,
+    orderedSize:szBtn?szBtn.textContent.replace(/\s+/g,' ').trim():'',
+    orderedSizeIndex:szBtn?[...document.querySelectorAll('.sz-btn')].indexOf(szBtn):-1,
+    temps,
+    boxes:boxData,
+    boxCount:boxes.length,
+    colors:[...selectedColors],
+    sizeJudgment,
+    recJudgment,
+    cutTotal,
+    cutHollow,
+    packFormat:document.getElementById('pack-fmt')?.value||'',
+    photos:savedPhotos
+  };
+}
+
+function restoreFullInspectionState(d){
+  if(!d) return;
+  // Restore product
+  const prodBtn=document.querySelector(`.pb[onclick*="'${d.product}'"]`);
+  if(prodBtn) setProd(d.product, prodBtn);
+  if(d.customName) document.getElementById('custom-name').value=d.customName;
+  // Restore notes
+  if(d.notes) document.getElementById('notes').value=d.notes;
+  // Restore temperatures
+  document.getElementById('temp-readings').innerHTML='';
+  (d.temps||[]).forEach(v=>{
+    addTemp();
+    const inputs=document.querySelectorAll('#temp-readings input');
+    inputs[inputs.length-1].value=v;
+  });
+  updateTempRange();
+  // Restore size selection
+  if(d.orderedSizeIndex>=0){
+    const btns=document.querySelectorAll('.sz-btn');
+    if(btns[d.orderedSizeIndex]) selSz(btns[d.orderedSizeIndex]);
+  }
+  // Restore colors
+  selectedColors=new Set(d.colors||[]);
+  renderColorScale();updateColorDisplay();
+  // Restore box samples
+  boxes=[];boxCount=0;
+  document.getElementById('boxes-container').innerHTML='';
+  (d.boxes||[]).forEach(b=>{
+    addBox();
+    const lastBox=boxes[boxes.length-1];
+    const totEl=document.getElementById('tot-'+lastBox.id);
+    if(totEl){totEl.value=b.total;updBox(lastBox.id);}
+    Object.entries(b.defects||{}).forEach(([def,val])=>{
+      const inp=document.querySelector(`[data-box="${lastBox.id}"][data-defect="${def}"]`);
+      if(inp){inp.value=val;updBox(lastBox.id);}
+    });
+  });
+  // Restore cut sample
+  if(d.cutTotal){const el=document.getElementById('cut-total');if(el)el.value=d.cutTotal;}
+  if(d.cutHollow){const el=document.getElementById('cut-hollow');if(el)el.value=d.cutHollow;}
+  calcCut();
+  // Restore judgments
+  if(d.sizeJudgment){
+    const idx=['On size — acceptable','Borderline — customer approval needed','Off size — reject'].indexOf(d.sizeJudgment);
+    if(idx>=0){const btn=document.querySelectorAll('#view-inspect .card')[document.querySelectorAll('#view-inspect .card').length-4]?.querySelectorAll('.jb')[idx];if(btn)setJ('size',idx,btn);}
+  }
+  if(d.recJudgment){
+    const idx=['Pass — ship it','Conditional','Fail — do not ship'].indexOf(d.recJudgment);
+    if(idx>=0){const btn=document.querySelectorAll('#view-inspect .card')[document.querySelectorAll('#view-inspect .card').length-3]?.querySelectorAll('.jb')[idx];if(btn)setJ('rec',idx,btn);}
+  }
+  // Restore photos
+  if(d.photos){Object.entries(d.photos).forEach(([sec,imgs])=>{photoData[sec]=imgs||[];});renderPhotos();}
+  // Restore pack format
+  if(d.packFormat){const el=document.getElementById('pack-fmt');if(el)el.value=d.packFormat;}
+  updateAvg();
 }
 
 function saveProgress(){
@@ -454,12 +549,10 @@ function saveProgress(){
     };
     jobs.unshift(newJob);
     activeJobId=newJob.id;
-    saveJobs();
   }
-  // Save all current inspection state to the job
   const job=jobs.find(j=>j.id===activeJobId);
   if(!job){st.textContent='Could not save.';return;}
-  // Collect full form state
+  // Update job info fields
   job.customer=document.getElementById('customer').value.trim()||job.customer;
   job.po=document.getElementById('po').value.trim();
   job.pu=document.getElementById('pu').value.trim();
@@ -470,23 +563,9 @@ function saveProgress(){
   job.label=document.getElementById('label').value.trim();
   job.inspector=document.getElementById('inspector-name').value.trim();
   job.date=document.getElementById('insp-date').value;
-  // Save inspection-specific data
-  const tempVals=[...document.querySelectorAll('#temp-readings input')].map(i=>parseFloat(i.value)).filter(v=>!isNaN(v));
-  const szBtn=document.querySelector('.sz-btn.active');
-  job.inspectionData={
-    product:curProd,
-    notes:document.getElementById('notes').value,
-    qty:document.getElementById('qty-num').value+' cases',
-    label:document.getElementById('label').value,
-    orderedSize:szBtn?szBtn.textContent.replace(/\s+/g,' ').trim():'',
-    tempRange:tempVals.length?(Math.min(...tempVals)===Math.max(...tempVals)?Math.min(...tempVals)+'°F':Math.min(...tempVals)+'–'+Math.max(...tempVals)+'°F'):'',
-    sizeJudgment:sizeJudgment,
-    recJudgment:recJudgment,
-    colors:[...selectedColors],
-    boxCount:boxes.filter(b=>b.total>0).length
-  };
+  // Capture full inspection state
+  job.inspectionData=captureFullInspectionState();
   saveJobs();
-  // Update header
   document.getElementById('inspect-title').textContent=job.customer;
   document.getElementById('back-btn').style.display='flex';
   st.textContent='✓ Progress saved';
