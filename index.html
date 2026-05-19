@@ -50,14 +50,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .temp-entry input{width:100px;padding:7px 9px;border:0.5px solid rgba(0,0,0,0.18);border-radius:9px;font-size:14px;background:#fff;color:#1a1a1a;font-family:inherit;}
 .gen-btn{width:100%;padding:14px;background:#0C447C;color:#E6F1FB;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;margin-top:4px;font-family:inherit;}
 .gen-btn:active{opacity:0.85;}
-.send-btn{width:100%;padding:14px;background:#25D366;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;margin-top:8px;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;}
-.send-btn:active{opacity:0.85;}
-.send-btn:disabled{background:#ccc;cursor:not-allowed;}
-.link-box{background:#EAF3FB;border:0.5px solid #0C447C;border-radius:12px;padding:12px 14px;margin-top:8px;display:none;}
-.link-box-title{font-size:11px;font-weight:600;color:#0C447C;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
-.link-url{font-size:12px;color:#185FA5;word-break:break-all;margin-bottom:8px;line-height:1.5;}
-.copy-btn{padding:7px 14px;background:#0C447C;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
-.copy-btn:active{opacity:0.8;}
+.gen-btn:disabled{background:#ccc;cursor:not-allowed;}
 .hid{display:none;}
 .photo-sec{margin-bottom:14px;}
 .photo-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
@@ -67,9 +60,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .add-ph{width:64px;height:64px;border-radius:9px;border:0.5px dashed rgba(0,0,0,0.2);background:none;font-size:10px;color:#888;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-family:inherit;flex-shrink:0;}
 .status{text-align:center;font-size:13px;color:#888;margin-top:10px;min-height:18px;}
 .rm-btn{border:none;background:none;color:#aaa;font-size:12px;cursor:pointer;font-family:inherit;padding:2px 6px;}
-.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;}
 @keyframes spin{to{transform:rotate(360deg);}}
-
 .tab-bar{display:flex;background:#fff;border-radius:14px;padding:4px;margin-bottom:1rem;border:0.5px solid rgba(0,0,0,0.1);gap:4px;}
 .tab-btn{flex:1;padding:9px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;color:#888;background:none;transition:all 0.15s;}
 .tab-btn.active{background:#0C447C;color:#fff;}
@@ -148,7 +139,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <div class="app">
-  <!-- Tab bar -->
   <div class="tab-bar">
     <button class="tab-btn active" id="tab-jobs" onclick="showTab('jobs')">📋 Jobs</button>
     <button class="tab-btn" id="tab-inspect" onclick="showTab('inspect')">🔍 Inspection</button>
@@ -282,43 +272,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 
   <!-- Action buttons -->
-  <button class="gen-btn" onclick="saveProgress()" style="background:#fff;color:#0C447C;border:1.5px solid #0C447C;margin-bottom:4px;">💾 Save progress</button>
-  <button class="gen-btn" onclick="generatePDF()">Download PDF report</button>
-  <button class="gen-btn" id="share-btn" onclick="generateLink()" style="background:#1a1a1a;margin-top:8px;">&#128228; Generate &amp; share report</button>
-
-  <!-- Share sheet shown after link is generated -->
-  <div id="share-sheet" style="display:none;background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:14px;padding:1rem 1.25rem;margin-top:8px;">
-    <div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Report link ready &#8212; send via</div>
-    <div style="display:flex;flex-direction:column;gap:8px;">
-      <button onclick="sendWhatsApp()" style="width:100%;padding:12px;background:#25D366;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;">&#128172; WhatsApp</button>
-      <button onclick="sendSMS()" style="width:100%;padding:12px;background:#0C447C;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;">&#128241; Text message</button>
-      <button onclick="copyLink()" id="copy-btn" style="width:100%;padding:12px;background:#f2f2f0;color:#1a1a1a;border:0.5px solid rgba(0,0,0,0.15);border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;">&#128203; Copy link</button>
-    </div>
-    <div style="font-size:11px;color:#aaa;margin-top:10px;word-break:break-all;" id="link-preview"></div>
-  </div>
-
+  <button class="gen-btn" onclick="saveProgress()" style="background:#fff;color:#0C447C;border:1.5px solid #0C447C;margin-bottom:8px;">💾 Save progress</button>
+  <button class="gen-btn" id="send-pdf-btn" onclick="sendPDF()">📤 Send PDF report</button>
   <div class="status" id="pdf-status"></div>
-  </div><!-- end view-inspect -->
-</div><!-- end app -->
+  </div>
+</div>
 
 <script>
-// ===== JOBS SYSTEM =====
-let jobs = JSON.parse(localStorage.getItem('birdman_jobs') || '[]');
-let activeJobId = null;
+// ===== JOBS =====
+let jobs=JSON.parse(localStorage.getItem('birdman_jobs')||'[]');
+let activeJobId=null;
 
-function saveJobs(){
-  localStorage.setItem('birdman_jobs', JSON.stringify(jobs));
-}
+function saveJobs(){localStorage.setItem('birdman_jobs',JSON.stringify(jobs));}
 
 function showTab(tab){
-  if(tab==='inspect' && !activeJobId){
-    // Starting fresh inspection — reset form
-    resetInspectionForm();
-  }
-  document.getElementById('view-jobs').style.display = tab==='jobs' ? 'block' : 'none';
-  document.getElementById('view-inspect').style.display = tab==='inspect' ? 'block' : 'none';
-  document.getElementById('tab-jobs').classList.toggle('active', tab==='jobs');
-  document.getElementById('tab-inspect').classList.toggle('active', tab==='inspect');
+  if(tab==='inspect'&&!activeJobId) resetInspectionForm();
+  document.getElementById('view-jobs').style.display=tab==='jobs'?'block':'none';
+  document.getElementById('view-inspect').style.display=tab==='inspect'?'block':'none';
+  document.getElementById('tab-jobs').classList.toggle('active',tab==='jobs');
+  document.getElementById('tab-inspect').classList.toggle('active',tab==='inspect');
   if(tab==='jobs') renderJobs();
 }
 
@@ -327,232 +299,103 @@ function openNewJobModal(){
   document.getElementById('nj-date').value=new Date().toISOString().split('T')[0];
   document.getElementById('nj-customer').focus();
 }
-
 function closeNewJobModal(){
   document.getElementById('new-job-modal').style.display='none';
-  ['nj-customer','nj-po','nj-pu','nj-destination','nj-grower','nj-location','nj-inspector','nj-qty','nj-label'].forEach(id=>{
-    document.getElementById(id).value='';
-  });
+  ['nj-customer','nj-po','nj-pu','nj-destination','nj-grower','nj-location','nj-inspector','nj-qty','nj-label'].forEach(id=>{document.getElementById(id).value='';});
 }
-
 function saveNewJob(){
-  const customer = document.getElementById('nj-customer').value.trim();
+  const customer=document.getElementById('nj-customer').value.trim();
   if(!customer){alert('Please enter a customer name.');return;}
-  const job = {
-    id: Date.now(),
-    customer,
-    po: document.getElementById('nj-po').value.trim(),
-    pu: document.getElementById('nj-pu').value.trim(),
-    destination: document.getElementById('nj-destination').value.trim(),
-    grower: document.getElementById('nj-grower').value.trim(),
-    location: document.getElementById('nj-location').value.trim(),
-    qty: document.getElementById('nj-qty').value.trim(),
-    label: document.getElementById('nj-label').value.trim(),
-    inspector: document.getElementById('nj-inspector').value.trim(),
-    date: document.getElementById('nj-date').value,
-    status: 'open', // open | report-sent | complete
-    reportLink: null,
-    bolSent: false,
-    createdAt: new Date().toISOString(),
-    inspectionData: null
-  };
-  jobs.unshift(job);
-  saveJobs();
-  closeNewJobModal();
-  renderJobs();
+  const job={id:Date.now(),customer,po:document.getElementById('nj-po').value.trim(),pu:document.getElementById('nj-pu').value.trim(),destination:document.getElementById('nj-destination').value.trim(),grower:document.getElementById('nj-grower').value.trim(),location:document.getElementById('nj-location').value.trim(),qty:document.getElementById('nj-qty').value.trim(),label:document.getElementById('nj-label').value.trim(),inspector:document.getElementById('nj-inspector').value.trim(),date:document.getElementById('nj-date').value,status:'open',reportSent:false,bolSent:false,createdAt:new Date().toISOString(),inspectionData:null};
+  jobs.unshift(job);saveJobs();closeNewJobModal();renderJobs();
 }
 
 function getStatusBadge(job){
   if(job.bolSent) return '<span class="status-badge badge-complete">✅ Complete</span>';
-  if(job.reportLink) return '<span class="status-badge badge-report">📋 Report sent</span>';
+  if(job.reportSent) return '<span class="status-badge badge-report">📋 Report sent</span>';
   return '<span class="status-badge badge-open">🔵 Open</span>';
 }
 
 function renderJobs(){
-  const container = document.getElementById('jobs-list');
-  if(!jobs.length){
-    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No jobs yet</div><div class="empty-sub">Tap "+ New job order" to add your first job for the day.</div></div>';
-    return;
-  }
-  container.innerHTML = jobs.map(job => {
-    const bolBtnClass = job.bolSent ? 'ja-bol sent' : 'ja-bol';
-    const bolBtnText = job.bolSent ? '🚛 BOL sent' : '📸 Send BOL';
-    const inspectBtnText = job.reportLink ? '🔍 Edit report' : '🔍 Start inspection';
-    return `<div class="job-card" id="jobcard-${job.id}">
-      <div class="job-card-top">
-        <div>
-          <div class="job-title">${job.customer}</div>
-          <div class="job-sub">${[job.destination, job.pu?'PU# '+job.pu:''].filter(Boolean).join(' · ')}</div>
-          <div class="job-sub" style="margin-top:2px;">${[job.grower, job.location].filter(Boolean).join(' · ')}</div>
-        </div>
-        ${getStatusBadge(job)}
+  const container=document.getElementById('jobs-list');
+  if(!jobs.length){container.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No jobs yet</div><div class="empty-sub">Tap "+ New job order" to add your first job for the day.</div></div>';return;}
+  container.innerHTML=jobs.map(job=>`<div class="job-card" id="jobcard-${job.id}">
+    <div class="job-card-top">
+      <div>
+        <div class="job-title">${job.customer}</div>
+        <div class="job-sub">${[job.destination,job.pu?'PU# '+job.pu:''].filter(Boolean).join(' · ')}</div>
+        <div class="job-sub" style="margin-top:2px;">${[job.grower,job.location].filter(Boolean).join(' · ')}</div>
       </div>
-      <div class="job-actions">
-        <button class="ja-btn ja-inspect" onclick="openJob(${job.id})">${inspectBtnText}</button>
-        <button class="ja-btn ja-bol ${job.bolSent?'sent':''}" onclick="sendBOL(${job.id})">${bolBtnText}</button>
-        <button class="ja-btn ja-delete" onclick="deleteJob(${job.id})">🗑</button>
-      </div>
-    </div>`;
-  }).join('');
+      ${getStatusBadge(job)}
+    </div>
+    <div class="job-actions">
+      <button class="ja-btn ja-inspect" onclick="openJob(${job.id})">${job.reportSent?'🔍 Edit report':'🔍 Start inspection'}</button>
+      <button class="ja-btn ja-bol ${job.bolSent?'sent':''}" onclick="sendBOL(${job.id})">${job.bolSent?'🚛 BOL sent':'📸 Send BOL'}</button>
+      <button class="ja-btn ja-delete" onclick="deleteJob(${job.id})">🗑</button>
+    </div>
+  </div>`).join('');
 }
 
 function openJob(id){
-  const job = jobs.find(j=>j.id===id);
-  if(!job) return;
-  activeJobId = id;
-  // Pre-fill inspection form with job info
-  document.getElementById('customer').value = job.customer || '';
-  document.getElementById('po').value = job.po || '';
-  document.getElementById('pu').value = job.pu || '';
-  document.getElementById('destination').value = job.destination || '';
-  document.getElementById('grower').value = job.grower || '';
-  document.getElementById('location').value = job.location || '';
-  document.getElementById('inspector-name').value = job.inspector || '';
-  document.getElementById('qty-num').value = job.qty || '';
-  document.getElementById('label').value = job.label || '';
-  document.getElementById('insp-date').value = job.date || new Date().toISOString().split('T')[0];
-  // Restore full inspection state if saved
-  if(job.inspectionData){
-    restoreFullInspectionState(job.inspectionData);
-  }
-  // Update header to show which job is open
-  document.getElementById('inspect-title').textContent = job.customer;
-  document.getElementById('inspect-sub').textContent = job.pu ? 'PU# '+job.pu+' · Birdman Trading Co.' : 'Birdman Trading Co. Inc.';
+  const job=jobs.find(j=>j.id===id);if(!job)return;
+  activeJobId=id;
+  document.getElementById('customer').value=job.customer||'';
+  document.getElementById('po').value=job.po||'';
+  document.getElementById('pu').value=job.pu||'';
+  document.getElementById('destination').value=job.destination||'';
+  document.getElementById('grower').value=job.grower||'';
+  document.getElementById('location').value=job.location||'';
+  document.getElementById('inspector-name').value=job.inspector||'';
+  document.getElementById('qty-num').value=job.qty||'';
+  document.getElementById('label').value=job.label||'';
+  document.getElementById('insp-date').value=job.date||new Date().toISOString().split('T')[0];
+  if(job.inspectionData) restoreFullInspectionState(job.inspectionData);
+  document.getElementById('inspect-title').textContent=job.customer;
+  document.getElementById('inspect-sub').textContent=job.pu?'PU# '+job.pu+' · Birdman Trading Co.':'Birdman Trading Co. Inc.';
   document.getElementById('back-btn').style.display='flex';
   showTab('inspect');
 }
 
-function restoreInspectionData(d){
-  if(d.product) setProd(d.product, document.querySelector(`.pb[onclick*="${d.product}"]`)||document.querySelector('.pb.active'));
-  if(d.notes) document.getElementById('notes').value = d.notes;
-  if(d.qty) document.getElementById('qty-num').value = d.qty.replace(' cases','');
-  if(d.label) document.getElementById('label').value = d.label || '';
-}
-
 function captureFullInspectionState(){
-  // Capture temperatures
   const temps=[...document.querySelectorAll('#temp-readings input')].map(i=>parseFloat(i.value)).filter(v=>!isNaN(v));
-  // Capture all box samples with defect values
-  const boxData=boxes.map(b=>{
-    const defectInputs={};
-    document.querySelectorAll(`[data-box="${b.id}"]`).forEach(inp=>{
-      defectInputs[inp.dataset.defect]=parseInt(inp.value)||0;
-    });
-    return{id:b.id,total:parseInt(document.getElementById('tot-'+b.id)?.value)||0,defects:defectInputs};
-  });
-  // Capture selected size button
+  const boxData=boxes.map(b=>{const defectInputs={};document.querySelectorAll(`[data-box="${b.id}"]`).forEach(inp=>{defectInputs[inp.dataset.defect]=parseInt(inp.value)||0;});return{id:b.id,total:parseInt(document.getElementById('tot-'+b.id)?.value)||0,defects:defectInputs};});
   const szBtn=document.querySelector('.sz-btn.active');
-  // Capture cut sample
-  const cutTotal=parseInt(document.getElementById('cut-total')?.value)||0;
-  const cutHollow=parseInt(document.getElementById('cut-hollow')?.value)||0;
-  // Capture photos — store full base64
-  const savedPhotos={};
-  PHOTO_SECS.forEach(s=>savedPhotos[s]=[...photoData[s]]);
-  return{
-    product:curProd,
-    customName:document.getElementById('custom-name')?.value||'',
-    notes:document.getElementById('notes').value,
-    orderedSize:szBtn?szBtn.textContent.replace(/\s+/g,' ').trim():'',
-    orderedSizeIndex:szBtn?[...document.querySelectorAll('.sz-btn')].indexOf(szBtn):-1,
-    temps,
-    boxes:boxData,
-    boxCount:boxes.length,
-    colors:[...selectedColors],
-    sizeJudgment,
-    recJudgment,
-    cutTotal,
-    cutHollow,
-    packFormat:document.getElementById('pack-fmt')?.value||'',
-    photos:savedPhotos
-  };
+  const savedPhotos={};PHOTO_SECS.forEach(s=>savedPhotos[s]=[...photoData[s]]);
+  return{product:curProd,customName:document.getElementById('custom-name')?.value||'',notes:document.getElementById('notes').value,orderedSize:szBtn?szBtn.textContent.replace(/\s+/g,' ').trim():'',orderedSizeIndex:szBtn?[...document.querySelectorAll('.sz-btn')].indexOf(szBtn):-1,temps,boxes:boxData,colors:[...selectedColors],sizeJudgment,recJudgment,cutTotal:parseInt(document.getElementById('cut-total')?.value)||0,cutHollow:parseInt(document.getElementById('cut-hollow')?.value)||0,packFormat:document.getElementById('pack-fmt')?.value||'',photos:savedPhotos};
 }
 
 function restoreFullInspectionState(d){
-  if(!d) return;
-  // Restore product
+  if(!d)return;
   const prodBtn=document.querySelector(`.pb[onclick*="'${d.product}'"]`);
-  if(prodBtn) setProd(d.product, prodBtn);
+  if(prodBtn) setProd(d.product,prodBtn);
   if(d.customName) document.getElementById('custom-name').value=d.customName;
-  // Restore notes
   if(d.notes) document.getElementById('notes').value=d.notes;
-  // Restore temperatures
   document.getElementById('temp-readings').innerHTML='';
-  (d.temps||[]).forEach(v=>{
-    addTemp();
-    const inputs=document.querySelectorAll('#temp-readings input');
-    inputs[inputs.length-1].value=v;
-  });
+  (d.temps||[]).forEach(v=>{addTemp();const inputs=document.querySelectorAll('#temp-readings input');inputs[inputs.length-1].value=v;});
   updateTempRange();
-  // Restore size selection
-  if(d.orderedSizeIndex>=0){
-    const btns=document.querySelectorAll('.sz-btn');
-    if(btns[d.orderedSizeIndex]) selSz(btns[d.orderedSizeIndex]);
-  }
-  // Restore colors
-  selectedColors=new Set(d.colors||[]);
-  renderColorScale();updateColorDisplay();
-  // Restore box samples
-  boxes=[];boxCount=0;
-  document.getElementById('boxes-container').innerHTML='';
-  (d.boxes||[]).forEach(b=>{
-    addBox();
-    const lastBox=boxes[boxes.length-1];
-    const totEl=document.getElementById('tot-'+lastBox.id);
-    if(totEl){totEl.value=b.total;updBox(lastBox.id);}
-    Object.entries(b.defects||{}).forEach(([def,val])=>{
-      const inp=document.querySelector(`[data-box="${lastBox.id}"][data-defect="${def}"]`);
-      if(inp){inp.value=val;updBox(lastBox.id);}
-    });
-  });
-  // Restore cut sample
+  if(d.orderedSizeIndex>=0){const btns=document.querySelectorAll('.sz-btn');if(btns[d.orderedSizeIndex])selSz(btns[d.orderedSizeIndex]);}
+  selectedColors=new Set(d.colors||[]);renderColorScale();updateColorDisplay();
+  boxes=[];boxCount=0;document.getElementById('boxes-container').innerHTML='';
+  (d.boxes||[]).forEach(b=>{addBox();const lastBox=boxes[boxes.length-1];const totEl=document.getElementById('tot-'+lastBox.id);if(totEl){totEl.value=b.total;updBox(lastBox.id);}Object.entries(b.defects||{}).forEach(([def,val])=>{const inp=document.querySelector(`[data-box="${lastBox.id}"][data-defect="${def}"]`);if(inp){inp.value=val;updBox(lastBox.id);}});});
   if(d.cutTotal){const el=document.getElementById('cut-total');if(el)el.value=d.cutTotal;}
   if(d.cutHollow){const el=document.getElementById('cut-hollow');if(el)el.value=d.cutHollow;}
   calcCut();
-  // Restore judgments
-  if(d.sizeJudgment){
-    const idx=['On size — acceptable','Borderline — customer approval needed','Off size — reject'].indexOf(d.sizeJudgment);
-    if(idx>=0){const btn=document.querySelectorAll('#view-inspect .card')[document.querySelectorAll('#view-inspect .card').length-4]?.querySelectorAll('.jb')[idx];if(btn)setJ('size',idx,btn);}
-  }
-  if(d.recJudgment){
-    const idx=['Pass — ship it','Conditional','Fail — do not ship'].indexOf(d.recJudgment);
-    if(idx>=0){const btn=document.querySelectorAll('#view-inspect .card')[document.querySelectorAll('#view-inspect .card').length-3]?.querySelectorAll('.jb')[idx];if(btn)setJ('rec',idx,btn);}
-  }
-  // Restore photos
+  if(d.sizeJudgment){const idx=['On size — acceptable','Borderline — customer approval needed','Off size — reject'].indexOf(d.sizeJudgment);if(idx>=0){const btn=document.querySelectorAll('#view-inspect .card')[document.querySelectorAll('#view-inspect .card').length-4]?.querySelectorAll('.jb')[idx];if(btn)setJ('size',idx,btn);}}
+  if(d.recJudgment){const idx=['Pass — ship it','Conditional','Fail — do not ship'].indexOf(d.recJudgment);if(idx>=0){const btn=document.querySelectorAll('#view-inspect .card')[document.querySelectorAll('#view-inspect .card').length-3]?.querySelectorAll('.jb')[idx];if(btn)setJ('rec',idx,btn);}}
   if(d.photos){Object.entries(d.photos).forEach(([sec,imgs])=>{photoData[sec]=imgs||[];});renderPhotos();}
-  // Restore pack format
   if(d.packFormat){const el=document.getElementById('pack-fmt');if(el)el.value=d.packFormat;}
   updateAvg();
 }
 
 function saveProgress(){
   const st=document.getElementById('pdf-status');
-  // Auto-create job if none active
   if(!activeJobId){
     const customer=document.getElementById('customer').value.trim();
-    const newJob={
-      id:Date.now(),
-      customer:customer||'Unnamed job',
-      po:document.getElementById('po').value.trim(),
-      pu:document.getElementById('pu').value.trim(),
-      destination:document.getElementById('destination').value.trim(),
-      grower:document.getElementById('grower').value.trim(),
-      location:document.getElementById('location').value.trim(),
-      qty:document.getElementById('qty-num').value.trim(),
-      label:document.getElementById('label').value.trim(),
-      inspector:document.getElementById('inspector-name').value.trim(),
-      date:document.getElementById('insp-date').value,
-      status:'open',
-      reportLink:null,
-      bolSent:false,
-      createdAt:new Date().toISOString(),
-      inspectionData:null
-    };
-    jobs.unshift(newJob);
-    activeJobId=newJob.id;
+    const newJob={id:Date.now(),customer:customer||'Unnamed job',po:document.getElementById('po').value.trim(),pu:document.getElementById('pu').value.trim(),destination:document.getElementById('destination').value.trim(),grower:document.getElementById('grower').value.trim(),location:document.getElementById('location').value.trim(),qty:document.getElementById('qty-num').value.trim(),label:document.getElementById('label').value.trim(),inspector:document.getElementById('inspector-name').value.trim(),date:document.getElementById('insp-date').value,status:'open',reportSent:false,bolSent:false,createdAt:new Date().toISOString(),inspectionData:null};
+    jobs.unshift(newJob);activeJobId=newJob.id;
   }
   const job=jobs.find(j=>j.id===activeJobId);
   if(!job){st.textContent='Could not save.';return;}
-  // Update job info fields
   job.customer=document.getElementById('customer').value.trim()||job.customer;
   job.po=document.getElementById('po').value.trim();
   job.pu=document.getElementById('pu').value.trim();
@@ -563,25 +406,18 @@ function saveProgress(){
   job.label=document.getElementById('label').value.trim();
   job.inspector=document.getElementById('inspector-name').value.trim();
   job.date=document.getElementById('insp-date').value;
-  // Capture full inspection state
   job.inspectionData=captureFullInspectionState();
   saveJobs();
   document.getElementById('inspect-title').textContent=job.customer;
   document.getElementById('back-btn').style.display='flex';
-  st.textContent='✓ Progress saved';
-  setTimeout(()=>st.textContent='',3000);
+  st.textContent='✓ Progress saved';setTimeout(()=>st.textContent='',3000);
 }
 
 function resetInspectionForm(){
-  ['customer','po','pu','destination','grower','location','inspector-name','notes','label'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.value='';
-  });
+  ['customer','po','pu','destination','grower','location','inspector-name','notes','label'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('qty-num').value='';
   document.getElementById('insp-date').value=new Date().toISOString().split('T')[0];
-  document.getElementById('share-sheet').style.display='none';
   document.getElementById('pdf-status').textContent='';
-  lastReportLink='';
   setProd('tomato',document.querySelector('.pb'));
 }
 
@@ -591,94 +427,34 @@ function goBackToJobs(){
   resetInspectionForm();
   document.getElementById('inspect-title').textContent='New inspection';
   document.getElementById('inspect-sub').textContent='Birdman Trading Co. Inc.';
-  document.getElementById('share-sheet').style.display='none';
   showTab('jobs');
 }
 
-let jobToDelete = null;
-
-function deleteJob(id){
-  const job = jobs.find(j=>j.id===id);
-  if(!job) return;
-  jobToDelete = id;
-  const sub = job.customer ? 'Are you sure you want to delete the job for '+job.customer+'? This cannot be undone.' : 'This cannot be undone.';
-  document.getElementById('delete-modal-sub').textContent = sub;
-  document.getElementById('delete-modal').style.display = 'flex';
-}
-
-function closeDeleteModal(){
-  document.getElementById('delete-modal').style.display = 'none';
-  jobToDelete = null;
-}
-
-function confirmDelete(){
-  if(!jobToDelete) return;
-  jobs = jobs.filter(j=>j.id!==jobToDelete);
-  if(activeJobId===jobToDelete) activeJobId=null;
-  saveJobs();
-  closeDeleteModal();
-  renderJobs();
-}
+let jobToDelete=null;
+function deleteJob(id){const job=jobs.find(j=>j.id===id);if(!job)return;jobToDelete=id;document.getElementById('delete-modal-sub').textContent=job.customer?'Are you sure you want to delete the job for '+job.customer+'? This cannot be undone.':'This cannot be undone.';document.getElementById('delete-modal').style.display='flex';}
+function closeDeleteModal(){document.getElementById('delete-modal').style.display='none';jobToDelete=null;}
+function confirmDelete(){if(!jobToDelete)return;jobs=jobs.filter(j=>j.id!==jobToDelete);if(activeJobId===jobToDelete)activeJobId=null;saveJobs();closeDeleteModal();renderJobs();}
 
 function sendBOL(id){
-  const job = jobs.find(j=>j.id===id);
-  if(!job) return;
-  const msg = `*BOL — ${job.customer}*
-${[job.pu?'PU# '+job.pu:'', job.destination].filter(Boolean).join(' · ')}
-
-📎 Bill of Lading — please see attached photo
-
-— ${job.inspector||'Birdman Trading Co.'}`;
-  // Open camera via file input then WhatsApp
-  const inp = document.createElement('input');
-  inp.type = 'file';
-  inp.accept = 'image/*';
-  inp.capture = 'environment';
-  inp.onchange = () => {
-    // Mark BOL as sent
-    job.bolSent = true;
-    if(job.reportLink) job.status = 'complete';
-    saveJobs();
-    renderJobs();
-    // Open WhatsApp with the message (photo must be attached manually — WhatsApp web API doesn't support direct attachment)
-    window.open('https://wa.me/?text='+encodeURIComponent(msg), '_blank');
-  };
+  const job=jobs.find(j=>j.id===id);if(!job)return;
+  const msg=`*BOL — ${job.customer}*\n${[job.pu?'PU# '+job.pu:'',job.destination].filter(Boolean).join(' · ')}\n\n📎 Bill of Lading — please see attached photo\n\n— ${job.inspector||'Birdman Trading Co.'}`;
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.capture='environment';
+  inp.onchange=()=>{job.bolSent=true;saveJobs();renderJobs();window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');};
   inp.click();
 }
 
 // ===== INSPECTION FORM =====
 const PRODS={
-  tomato:{
-    sizes:[{l:'Small',r:'155-165'},{l:'Medium',r:'135-145'},{l:'Large',r:'110-120'},{l:'XL',r:'90-100'},{l:'Jumbo',r:'80-85'},{l:'Super Jumbo',r:'65 or less'}],
-    defects:['Soft','Green shoulder','Mixed coloring','Dead green','Gold/silver flake','Pointed tip','Decay/mold','Rain damage','Scarring','Insect damage'],
-    cutDefect:'Hollow',showColor:true,
-    hint:'Enter total count then number of each defect per box.'
-  },
-  cucumber:{
-    sizes:[{l:'Super Select',r:'68-72'},{l:'Select',r:'78-82'},{l:'Plain',r:'74-80'},{l:'Large',r:'52-56'},{l:'Small',r:'85-90'},{l:'Plain (no grade)',r:'Varies'}],
-    defects:['Yellow belly','Scarring','Soft tips','Curving','Yellow tips','Mold/decay','Overall soft','Insect damage'],
-    cutDefect:'Hollow heart',showColor:false,
-    hint:'Enter total count then number of each defect per box.'
-  },
-  strawberry:{
-    sizes:[],
-    defects:['Soft','Bruising','Sun damage','Decay/mold','Water damage','White shoulder','White tips','Overripe','Insect damage','Dry leaf/stem'],
-    cutDefect:null,showColor:false,
-    hint:'Enter total berry count then number of each defect per clamshell.'
-  },
-  custom:{
-    sizes:[],
-    defects:['Soft/decay','Bruising','Scarring','Mold','Insect damage','Other'],
-    cutDefect:null,showColor:false,
-    hint:'Enter total count and defects found per sample.'
-  }
+  tomato:{sizes:[{l:'Small',r:'155-165'},{l:'Medium',r:'135-145'},{l:'Large',r:'110-120'},{l:'XL',r:'90-100'},{l:'Jumbo',r:'80-85'},{l:'Super Jumbo',r:'65 or less'}],defects:['Soft','Green shoulder','Mixed coloring','Dead green','Gold/silver flake','Pointed tip','Decay/mold','Rain damage','Scarring','Insect damage'],cutDefect:'Hollow',showColor:true,hint:'Enter total count then number of each defect per box.'},
+  cucumber:{sizes:[{l:'Super Select',r:'68-72'},{l:'Select',r:'78-82'},{l:'Plain',r:'74-80'},{l:'Large',r:'52-56'},{l:'Small',r:'85-90'},{l:'Plain (no grade)',r:'Varies'}],defects:['Yellow belly','Scarring','Soft tips','Curving','Yellow tips','Mold/decay','Overall soft','Insect damage'],cutDefect:'Hollow heart',showColor:false,hint:'Enter total count then number of each defect per box.'},
+  strawberry:{sizes:[],defects:['Soft','Bruising','Sun damage','Decay/mold','Water damage','White shoulder','White tips','Overripe','Insect damage','Dry leaf/stem'],cutDefect:null,showColor:false,hint:'Enter total berry count then number of each defect per clamshell.'},
+  custom:{sizes:[],defects:['Soft/decay','Bruising','Scarring','Mold','Insect damage','Other'],cutDefect:null,showColor:false,hint:'Enter total count and defects found per sample.'}
 };
 const COLOR_BG={'1':'#4a7c3f','1.5':'#6a8c3a','2':'#8a9c35','2.5':'#a89030','3':'#c07830','3.5':'#c85a28','4':'#c03820','4.5':'#a82818','5':'#901810','5.5':'#780810'};
 const COLOR_LABELS={'1':'Full green','1.5':'Slight turn','2':'Breaker','2.5':'Turning','3':'Pink','3.5':'Light red','4':'Red','4.5':'Full red','5':'Very red','5.5':'Overripe'};
 const STAGES=['1','1.5','2','2.5','3','3.5','4','4.5','5','5.5'];
 const PHOTO_SECS=['Load / packaging','Product condition','Defects','Temperature','Additional'];
 let curProd='tomato',boxCount=0,boxes=[],selectedColors=new Set(),photoData={},sizeJudgment='',recJudgment='';
-let lastReportLink='';
 PHOTO_SECS.forEach(s=>photoData[s]=[]);
 document.getElementById('insp-date').value=new Date().toISOString().split('T')[0];
 
@@ -692,24 +468,13 @@ function setProd(p,btn){
   document.getElementById('cut-section').classList.toggle('hid',!PRODS[p].cutDefect);
   document.getElementById('sample-hint').textContent=PRODS[p].hint;
   renderSizes();renderColorScale();
-  boxes=[];boxCount=0;
-  document.getElementById('boxes-container').innerHTML='';
-  document.getElementById('avg-section').classList.add('hid');
-  addBox();
+  boxes=[];boxCount=0;document.getElementById('boxes-container').innerHTML='';document.getElementById('avg-section').classList.add('hid');addBox();
 }
 
 function renderSizes(){
   const p=PRODS[curProd],grid=document.getElementById('size-grid');
-  if(curProd==='strawberry'){
-    document.getElementById('size-label').textContent='Pack format';
-    document.getElementById('size-hint').textContent='Select pack format from PO';
-    grid.innerHTML='';
-    document.getElementById('pack-section').classList.remove('hid');
-    return;
-  }
-  document.getElementById('pack-section').classList.add('hid');
-  document.getElementById('size-label').textContent='Ordered size / grade';
-  document.getElementById('size-hint').textContent='Select the size ordered on the PO';
+  if(curProd==='strawberry'){document.getElementById('size-label').textContent='Pack format';document.getElementById('size-hint').textContent='Select pack format from PO';grid.innerHTML='';document.getElementById('pack-section').classList.remove('hid');return;}
+  document.getElementById('pack-section').classList.add('hid');document.getElementById('size-label').textContent='Ordered size / grade';document.getElementById('size-hint').textContent='Select the size ordered on the PO';
   grid.innerHTML=p.sizes.length?p.sizes.map(s=>`<button class="sz-btn" onclick="selSz(this)">${s.l}<br><span style="font-size:11px;color:#888;">${s.r}</span></button>`).join(''):'';
 }
 function selSz(btn){document.querySelectorAll('.sz-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
@@ -719,22 +484,16 @@ function renderColorScale(){
   if(!PRODS[curProd].showColor){sc.innerHTML='';return;}
   sc.innerHTML=STAGES.map(s=>`<button class="cs-btn${selectedColors.has(s)?' active':''}" style="background:${COLOR_BG[s]};" onclick="toggleColor('${s}',this)">${s}</button>`).join('');
 }
-function toggleColor(v,btn){
-  selectedColors.has(v)?selectedColors.delete(v):selectedColors.add(v);
-  btn.classList.toggle('active');
-  updateColorDisplay();
-}
+function toggleColor(v,btn){selectedColors.has(v)?selectedColors.delete(v):selectedColors.add(v);btn.classList.toggle('active');updateColorDisplay();}
 function updateColorDisplay(){
   const el=document.getElementById('color-display');
   if(!selectedColors.size){el.textContent='No color selected';return;}
-  const sorted=STAGES.filter(s=>selectedColors.has(s));
-  const mn=sorted[0],mx=sorted[sorted.length-1];
+  const sorted=STAGES.filter(s=>selectedColors.has(s)),mn=sorted[0],mx=sorted[sorted.length-1];
   el.textContent=mn===mx?`Color ${mn} — ${COLOR_LABELS[mn]}`:`Color ${mn} – ${mx} — ${COLOR_LABELS[mn]} to ${COLOR_LABELS[mx]}`;
 }
 
 function addTemp(){
-  const id='t'+Date.now();
-  const div=document.createElement('div');div.className='temp-entry';div.id=id;
+  const id='t'+Date.now();const div=document.createElement('div');div.className='temp-entry';div.id=id;
   div.innerHTML=`<input type="number" placeholder="°F" step="0.1" oninput="updateTempRange()"/><button class="rm-btn" onclick="removeTemp('${id}')">Remove</button>`;
   document.getElementById('temp-readings').appendChild(div);updateTempRange();
 }
@@ -743,16 +502,13 @@ function updateTempRange(){
   const vals=[...document.querySelectorAll('#temp-readings input')].map(i=>parseFloat(i.value)).filter(v=>!isNaN(v));
   const wrap=document.getElementById('temp-range-wrap');
   if(!vals.length){wrap.classList.add('hid');return;}
-  wrap.classList.remove('hid');
-  const mn=Math.min(...vals),mx=Math.max(...vals);
+  wrap.classList.remove('hid');const mn=Math.min(...vals),mx=Math.max(...vals);
   document.getElementById('temp-range-val').textContent=mn===mx?`${mn}°F`:`${mn}–${mx}°F`;
 }
 
 function addBox(){
-  boxCount++;const id=boxCount;
-  boxes.push({id,total:0,defects:{}});
-  const p=PRODS[curProd];
-  const div=document.createElement('div');div.className='box-wrap';div.id=`box-${id}`;
+  boxCount++;const id=boxCount;boxes.push({id,total:0,defects:{}});
+  const p=PRODS[curProd];const div=document.createElement('div');div.className='box-wrap';div.id=`box-${id}`;
   div.innerHTML=`<div class="bh"><span style="font-size:13px;font-weight:600;">Box sample #${id}</span><button class="rm-btn" onclick="removeBox(${id})">Remove</button></div>
   <div class="fr" style="margin-bottom:8px;"><label style="font-size:12px;color:#888;">Total count in box</label><input type="number" id="tot-${id}" placeholder="e.g. 115" min="0" style="padding:7px 9px;font-size:13px;" oninput="updBox(${id})"/></div>
   ${p.defects.map(d=>`<div class="dr"><span class="dn">${d}</span><input class="di" type="number" min="0" placeholder="0" data-defect="${d}" data-box="${id}" oninput="updBox(${id})"/><span class="dp" id="dp-${id}-${d.replace(/\W/g,'_')}">—</span></div>`).join('')}`;
@@ -760,513 +516,159 @@ function addBox(){
 }
 function removeBox(id){boxes=boxes.filter(b=>b.id!==id);document.getElementById(`box-${id}`)?.remove();updateAvg();}
 function updBox(id){
-  const total=parseInt(document.getElementById(`tot-${id}`)?.value)||0;
-  const box=boxes.find(b=>b.id===id);if(!box)return;
+  const total=parseInt(document.getElementById(`tot-${id}`)?.value)||0;const box=boxes.find(b=>b.id===id);if(!box)return;
   box.total=total;box.defects={};
-  document.querySelectorAll(`[data-box="${id}"]`).forEach(inp=>{
-    const d=inp.dataset.defect,val=parseInt(inp.value)||0;
-    box.defects[d]=val;
-    const el=document.getElementById(`dp-${id}-${d.replace(/\W/g,'_')}`);
-    if(el){if(total>0){const pct=val/total*100;el.textContent=pct.toFixed(1)+'%';el.className='dp'+(pct>20?' danger':pct>10?' warn':'');}else{el.textContent='—';el.className='dp';}}
-  });updateAvg();
+  document.querySelectorAll(`[data-box="${id}"]`).forEach(inp=>{const d=inp.dataset.defect,val=parseInt(inp.value)||0;box.defects[d]=val;const el=document.getElementById(`dp-${id}-${d.replace(/\W/g,'_')}`);if(el){if(total>0){const pct=val/total*100;el.textContent=pct.toFixed(1)+'%';el.className='dp'+(pct>20?' danger':pct>10?' warn':'');}else{el.textContent='—';el.className='dp';}}});updateAvg();
 }
 function updateAvg(){
-  const valid=boxes.filter(b=>b.total>0);
-  const as=document.getElementById('avg-section');
+  const valid=boxes.filter(b=>b.total>0);const as=document.getElementById('avg-section');
   if(!valid.length){as.classList.add('hid');return;}
   as.classList.remove('hid');
-  const rows=PRODS[curProd].defects.map(d=>{
-    const avg=valid.reduce((s,b)=>s+(b.total>0?(b.defects[d]||0)/b.total*100:0),0)/valid.length;
-    return{d,avg};
-  }).filter(r=>r.avg>0);
+  const rows=PRODS[curProd].defects.map(d=>{const avg=valid.reduce((s,b)=>s+(b.total>0?(b.defects[d]||0)/b.total*100:0),0)/valid.length;return{d,avg};}).filter(r=>r.avg>0);
   const t=document.getElementById('avg-table');
   t.innerHTML=`<tr><th>Defect</th><th style="text-align:right;">Avg %</th></tr>`+(rows.length?rows.map(r=>`<tr><td style="font-size:12px;">${r.d}</td><td style="text-align:right;font-weight:600;color:${r.avg>20?'#A32D2D':r.avg>10?'#854F0B':'#27500A'};">${r.avg.toFixed(1)}%</td></tr>`).join(''):'<tr><td colspan="2" style="font-size:12px;color:#888;">No defects recorded</td></tr>');
 }
 function calcCut(){
-  const t=parseInt(document.getElementById('cut-total').value)||0,h=parseInt(document.getElementById('cut-hollow').value)||0;
-  const el=document.getElementById('cut-result');
+  const t=parseInt(document.getElementById('cut-total').value)||0,h=parseInt(document.getElementById('cut-hollow').value)||0;const el=document.getElementById('cut-result');
   if(t>0){const pct=(h/t*100).toFixed(1);el.textContent=`${h} of ${t} cut — ${pct}% hollow`;el.style.color=pct>10?'#A32D2D':pct>5?'#854F0B':'#27500A';}
   else{el.textContent='—';el.style.color='#aaa';}
 }
 
 function renderPhotos(){
   const c=document.getElementById('photo-sections');c.innerHTML='';
-  PHOTO_SECS.forEach(sec=>{
-    const div=document.createElement('div');div.className='photo-sec';
-    div.innerHTML=`<div style="font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">${sec}</div><div class="photo-row" id="pr-${sec.replace(/\W/g,'_')}"></div>`;
-    c.appendChild(div);renderPhotoRow(sec);
-  });
+  PHOTO_SECS.forEach(sec=>{const div=document.createElement('div');div.className='photo-sec';div.innerHTML=`<div style="font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">${sec}</div><div class="photo-row" id="pr-${sec.replace(/\W/g,'_')}"></div>`;c.appendChild(div);renderPhotoRow(sec);});
 }
 function renderPhotoRow(sec){
   const key=sec.replace(/\W/g,'_'),row=document.getElementById(`pr-${key}`);if(!row)return;
   row.innerHTML='';
-  (photoData[sec]||[]).forEach((src,i)=>{
-    const th=document.createElement('div');th.className='photo-thumb';
-    th.innerHTML=`<img src="${src}"/><button class="rm-ph" onclick="removePhoto('${sec}',${i})">x</button>`;
-    row.appendChild(th);
-  });
+  (photoData[sec]||[]).forEach((src,i)=>{const th=document.createElement('div');th.className='photo-thumb';th.innerHTML=`<img src="${src}"/><button class="rm-ph" onclick="removePhoto('${sec}',${i})">x</button>`;row.appendChild(th);});
   const ab=document.createElement('button');ab.className='add-ph';
   ab.innerHTML='<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="1" y="4" width="16" height="12" rx="2" stroke="#888" stroke-width="1.2"/><circle cx="9" cy="10" r="3" stroke="#888" stroke-width="1.2"/><path d="M6 4l1.5-2h3L12 4" stroke="#888" stroke-width="1.2"/></svg><span style="font-size:10px;color:#888;">Add</span>';
   ab.onclick=()=>{const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.multiple=true;inp.onchange=e=>handlePhotos(sec,e);inp.click();};
   row.appendChild(ab);
 }
-function handlePhotos(sec,e){
-  Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{photoData[sec].push(ev.target.result);renderPhotoRow(sec);};r.readAsDataURL(f);});
-}
+function handlePhotos(sec,e){Array.from(e.target.files).forEach(f=>{const r=new FileReader();r.onload=ev=>{photoData[sec].push(ev.target.result);renderPhotoRow(sec);};r.readAsDataURL(f);});}
 function removePhoto(sec,idx){photoData[sec].splice(idx,1);renderPhotoRow(sec);}
 
 function setJ(type,val,btn){
   const cls=['jp','jc','jf'][val];
   const labels={size:['On size — acceptable','Borderline — customer approval needed','Off size — reject'],rec:['Pass — ship it','Conditional','Fail — do not ship']};
-  btn.closest('.card').querySelectorAll('.jb').forEach(b=>b.className='jb');
-  btn.classList.add(cls);
+  btn.closest('.card').querySelectorAll('.jb').forEach(b=>b.className='jb');btn.classList.add(cls);
   if(type==='size')sizeJudgment=labels.size[val];
   if(type==='rec')recJudgment=labels.rec[val];
 }
 
-// Collect all report data into an object
-function collectReportData(){
+// ===== PDF — built in memory, never saved to a URL that can be shared accidentally =====
+async function buildPDFBlob(){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'mm',format:'a4'});
+  const ml=15,cw=180,ph=297;let y=15;
+  const gray1='#1a1a1a',gray2='#555',gray3='#888',blue='#0C447C',green='#27500A',amber='#633806',red='#791F1F';
+  function chk(n){if(y+n>ph-15){doc.addPage();y=15;}}
+  function line(){doc.setDrawColor('#ddd');doc.setLineWidth(0.2);doc.line(ml,y,ml+cw,y);y+=3;}
+  function slabel(t){chk(8);doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(gray3);doc.text(t.toUpperCase(),ml,y);y+=5;}
+  function irow(l,v){if(!v)return;chk(7);doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(gray2);doc.text(l,ml,y);doc.setFont('helvetica','bold');doc.setTextColor(gray1);doc.text(String(v),ml+cw,y,{align:'right',maxWidth:cw*0.6});y+=6;line();}
+
+  doc.setFillColor(blue);doc.roundedRect(ml,y,cw,16,2,2,'F');
+  doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor('#fff');doc.text('Quality Inspection Report',ml+6,y+6.5);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');doc.text('Birdman Trading Co. Inc.',ml+6,y+12);
+  const dateStr=document.getElementById('insp-date').value||new Date().toISOString().split('T')[0];
+  doc.text(dateStr,ml+cw,y+6.5,{align:'right'});y+=22;
+
+  slabel('Job info');
   const prod=curProd==='custom'?(document.getElementById('custom-name').value||'Custom product'):{tomato:'Roma tomatoes',cucumber:'Slicer cucumber',strawberry:'Strawberry'}[curProd];
-  const szBtn=document.querySelector('.sz-btn.active');
-  const tempVals=[...document.querySelectorAll('#temp-readings input')].map(i=>parseFloat(i.value)).filter(v=>!isNaN(v));
-  const valid=boxes.filter(b=>b.total>0);
-  const defectAvgs=PRODS[curProd].defects.map(d=>{
-    const avg=valid.reduce((s,b)=>s+(b.total>0?(b.defects[d]||0)/b.total*100:0),0)/(valid.length||1);
-    return{d,avg};
-  }).filter(r=>r.avg>0);
-  const sorted=STAGES.filter(s=>selectedColors.has(s));
-  let colorText='';
-  if(sorted.length){const mn=sorted[0],mx=sorted[sorted.length-1];colorText=mn===mx?`Color ${mn} — ${COLOR_LABELS[mn]}`:`Color ${mn}–${mx} (${COLOR_LABELS[mn]} to ${COLOR_LABELS[mx]})`;}
-  const ct=parseInt(document.getElementById('cut-total').value)||0;
-  const ch=parseInt(document.getElementById('cut-hollow').value)||0;
-  // Strip photos (too large for link)
-  const photoSummary={};
-  PHOTO_SECS.forEach(s=>photoSummary[s]=photoData[s].length);
-  return{
-    product:prod,
-    productKey:curProd,
-    customer:document.getElementById('customer').value,
-    po:document.getElementById('po').value,
-    pu:document.getElementById('pu').value,
-    destination:document.getElementById('destination').value,
-    grower:document.getElementById('grower').value,
-    date:document.getElementById('insp-date').value,
-    location:document.getElementById('location').value,
-    qty:(document.getElementById('qty-num').value?document.getElementById('qty-num').value+' cases':''),
-    label:document.getElementById('label').value,
-    inspector:document.getElementById('inspector-name').value,
-    orderedSize:szBtn?szBtn.textContent.replace(/\s+/g,' ').trim():'',
-    packFormat:curProd==='strawberry'?document.getElementById('pack-fmt').value:'',
-    colorText,
-    tempVals,
-    tempRange:tempVals.length?(Math.min(...tempVals)===Math.max(...tempVals)?`${Math.min(...tempVals)}°F`:`${Math.min(...tempVals)}–${Math.max(...tempVals)}°F`):'',
-    boxCount:valid.length,
-    defectAvgs,
-    cutTotal:ct,
-    cutHollow:ch,
-    sizeJudgment,
-    recJudgment,
-    notes:document.getElementById('notes').value,
-    photoSummary,
-    generatedAt:new Date().toISOString()
-  };
-}
+  irow('Product',prod);irow('Customer',document.getElementById('customer').value);irow('Order #',document.getElementById('po').value);irow('Destination',document.getElementById('destination').value);irow('PU #',document.getElementById('pu').value);irow('Grower / shipper',document.getElementById('grower').value);irow('Location',document.getElementById('location').value);
+  const qtyNum=document.getElementById('qty-num').value;irow('Qty ordered',qtyNum?qtyNum+' cases':'');irow('Label',document.getElementById('label').value);
+  const szBtn=document.querySelector('.sz-btn.active');if(szBtn)irow('Ordered size',szBtn.textContent.replace(/\s+/g,' ').trim());
+  if(curProd==='strawberry')irow('Pack format',document.getElementById('pack-fmt').value);y+=4;
 
-// Build the shareable HTML report page as a string
-function buildReportHTML(data){
-  const recColor=data.recJudgment.includes('Fail')?'#A32D2D':data.recJudgment.includes('Conditional')?'#854F0B':'#27500A';
-  const recBg=data.recJudgment.includes('Fail')?'#FCEBEB':data.recJudgment.includes('Conditional')?'#FAEEDA':'#EAF3DE';
-  const szColor=data.sizeJudgment.includes('reject')?'#A32D2D':data.sizeJudgment.includes('Borderline')?'#854F0B':'#27500A';
-  const szBg=data.sizeJudgment.includes('reject')?'#FCEBEB':data.sizeJudgment.includes('Borderline')?'#FAEEDA':'#EAF3DE';
-
-  const defectRows=data.defectAvgs.map(r=>{
-    const col=r.avg>20?'#A32D2D':r.avg>10?'#854F0B':'#27500A';
-    const bg=r.avg>20?'#FCEBEB':r.avg>10?'#FAEEDA':'#EAF3DE';
-    return`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid rgba(0,0,0,0.07);">
-      <span style="font-size:14px;color:#1a1a1a;">${r.d}</span>
-      <span style="font-size:13px;font-weight:700;color:${col};background:${bg};padding:3px 10px;border-radius:20px;">${r.avg.toFixed(1)}%</span>
-    </div>`;
-  }).join('');
-
-  const infoRows=[
-    ['Customer',data.customer],['PO #',data.po],['Grower / Shipper',data.grower],
-    ['Location',data.location],['Qty inspected',data.qty],['Label',data.label],
-    ['Ordered size',data.orderedSize],['Pack format',data.packFormat],
-    ['Color / maturity',data.colorText],['Pulp temp',data.tempRange],
-    ['Boxes sampled',data.boxCount?`${data.boxCount} box${data.boxCount>1?'es':''}`:'']]
-    .filter(r=>r[1])
-    .map(r=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid rgba(0,0,0,0.07);gap:10px;">
-      <span style="font-size:13px;color:#888;flex-shrink:0;">${r[0]}</span>
-      <span style="font-size:13px;font-weight:600;color:#1a1a1a;text-align:right;">${r[1]}</span>
-    </div>`).join('');
-
-  const cutHtml=data.cutTotal>0?`
-    <div style="background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;">
-      <div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Cut sample — hollow check</div>
-      <div style="font-size:22px;font-weight:700;color:#185FA5;">${((data.cutHollow/data.cutTotal)*100).toFixed(1)}% hollow</div>
-      <div style="font-size:13px;color:#888;margin-top:4px;">${data.cutHollow} of ${data.cutTotal} units cut</div>
-    </div>`:'';
-
-  const notesHtml=data.notes?`
-    <div style="background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;">
-      <div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Inspector notes</div>
-      <div style="font-size:14px;color:#1a1a1a;line-height:1.6;white-space:pre-wrap;">${data.notes}</div>
-    </div>`:'';
-
-  return`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>QC Report — ${data.product} — ${data.customer||'Birdman'}</title>
-<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f2f2f0;color:#1a1a1a;}
-.tab-bar{display:flex;background:#fff;border-radius:14px;padding:4px;margin-bottom:1rem;border:0.5px solid rgba(0,0,0,0.1);gap:4px;}
-.tab-btn{flex:1;padding:9px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;color:#888;background:none;transition:all 0.15s;}
-.tab-btn.active{background:#0C447C;color:#fff;}
-.job-card{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;}
-.job-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
-.job-title{font-size:15px;font-weight:700;color:#1a1a1a;}
-.job-sub{font-size:12px;color:#888;margin-top:2px;}
-.status-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;}
-.badge-open{background:#EAF3FB;color:#0C447C;}
-.badge-report{background:#EAF3DE;color:#27500A;}
-.badge-complete{background:#1a1a1a;color:#fff;}
-.job-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
-.ja-btn{flex:1;padding:8px 10px;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;border:none;min-width:80px;}
-.ja-inspect{background:#0C447C;color:#fff;}
-.ja-bol{background:#f2f2f0;color:#1a1a1a;border:0.5px solid rgba(0,0,0,0.15);}
-.ja-bol.sent{background:#EAF3DE;color:#27500A;}
-.ja-delete{background:none;color:#ccc;border:0.5px solid rgba(0,0,0,0.1);flex:0;padding:8px 12px;}
-.new-job-btn{width:100%;padding:13px;background:#0C447C;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:1rem;}
-.empty-state{text-align:center;padding:3rem 1rem;color:#888;}
-.empty-icon{font-size:40px;margin-bottom:12px;}
-.empty-title{font-size:16px;font-weight:600;color:#1a1a1a;margin-bottom:6px;}
-.empty-sub{font-size:13px;color:#888;line-height:1.5;}
-.back-btn{display:flex;align-items:center;gap:6px;background:none;border:none;font-size:14px;font-weight:600;color:#0C447C;cursor:pointer;font-family:inherit;padding:0;margin-bottom:1rem;}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;display:flex;align-items:flex-end;}
-.modal{background:#fff;border-radius:20px 20px 0 0;padding:1.5rem 1.25rem;width:100%;max-height:85vh;overflow-y:auto;}
-.modal-title{font-size:17px;font-weight:700;margin-bottom:1.25rem;}
-.modal-btns{display:flex;gap:8px;margin-top:1rem;}
-.modal-save{flex:1;padding:13px;background:#0C447C;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
-.modal-cancel{padding:13px 18px;background:#f2f2f0;color:#1a1a1a;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;}
-</style>
-</head><body>
-<div style="max-width:480px;margin:0 auto;padding:1rem;">
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;padding:1rem 1.25rem;background:#fff;border-radius:14px;border:0.5px solid rgba(0,0,0,0.1);">
-    <div style="width:44px;height:44px;border-radius:50%;background:#0C447C;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#E6F1FB;text-align:center;line-height:1.2;flex-shrink:0;">BT<br>Co.</div>
-    <div>
-      <div style="font-size:17px;font-weight:600;">Quality Inspection Report</div>
-      <div style="font-size:12px;color:#888;">Birdman Trading Co. Inc.</div>
-    </div>
-  </div>
-
-  ${data.recJudgment?`<div style="background:${recBg};border:0.5px solid ${recColor}40;border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;">
-    <div>
-      <div style="font-size:11px;font-weight:600;color:${recColor};text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;">Overall recommendation</div>
-      <div style="font-size:18px;font-weight:700;color:${recColor};">${data.recJudgment}</div>
-    </div>
-    <div style="font-size:28px;">${data.recJudgment.includes('Fail')?'🚫':data.recJudgment.includes('Conditional')?'⚠️':'✅'}</div>
-  </div>`:''}
-
-  <div style="background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;">
-    <div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;">Product</div>
-    <div style="font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:12px;">${data.product}</div>
-    ${infoRows}
-  </div>
-
-  ${data.defectAvgs.length?`<div style="background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;">
-    <div style="font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;">Defect averages</div>
-    ${defectRows}
-  </div>`:''}
-
-  ${cutHtml}
-
-  ${data.sizeJudgment?`<div style="background:${szBg};border:0.5px solid ${szColor}40;border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;">
-    <div style="font-size:11px;font-weight:600;color:${szColor};text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;">Sizing judgment</div>
-    <div style="font-size:16px;font-weight:700;color:${szColor};">${data.sizeJudgment}</div>
-  </div>`:''}
-
-  ${notesHtml}
-
-  <div style="background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem;">
-    <div style="font-size:12px;color:#888;">${data.inspector||'Inspector'} · Birdman Trading Co. Inc.</div>
-    <div style="font-size:12px;color:#aaa;margin-top:2px;">${data.date}</div>
-  </div>
-
-  <!-- Portal CTA -->
-  <div style="background:#0C447C;border-radius:14px;padding:1.25rem;margin-bottom:1rem;text-align:center;">
-    <div style="font-size:13px;color:#E6F1FB;margin-bottom:4px;opacity:0.8;">Want PDF downloads and full inspection history?</div>
-    <div style="font-size:16px;font-weight:700;color:#fff;">Get the Birdman Portal →</div>
-  </div>
-</div>
-</body></html>`;
-}
-
-// Build shareable link — compressed then optionally shortened
-async function generateLink(){
-  const btn=document.getElementById('share-btn');
-  const st=document.getElementById('pdf-status');
-  btn.textContent='Generating link...';
-  btn.disabled=true;
-  try{
-    const data=collectReportData();
-    const shareData={
-      p:data.product,c:data.customer,po:data.po,pu:data.pu,dest:data.destination,g:data.grower,
-      dt:data.date,loc:data.location,q:data.qty,lbl:data.label,
-      ins:data.inspector,os:data.orderedSize,pf:data.packFormat,
-      ct:data.colorText,tr:data.tempRange,bc:data.boxCount,
-      da:(data.defectAvgs||[]).map(r=>({d:r.d,a:parseFloat(r.avg.toFixed(1))})),
-      cht:data.cutTotal,chh:data.cutHollow,
-      sj:data.sizeJudgment,rj:data.recJudgment,n:data.notes
-    };
-    const json=JSON.stringify(shareData);
-    let encoded;
-    if(typeof pako!=='undefined'){
-      const compressed=pako.deflate(json);
-      let binary='';compressed.forEach(b=>binary+=String.fromCharCode(b));
-      encoded=btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-    }else{
-      encoded=btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-    }
-    const longUrl='https://ocalqc.github.io/Quality-Control/view.html?d='+encoded;
-    // Try to shorten with TinyURL (works from browser, blocked from server)
-    let shortUrl=longUrl;
-    try{
-      const resp=await fetch('https://tinyurl.com/api-create.php?url='+encodeURIComponent(longUrl));
-      if(resp.ok){
-        const text=await resp.text();
-        if(text.startsWith('https://tinyurl.com/'))shortUrl=text.trim();
-      }
-    }catch(e){/* use long URL if shortener fails */}
-    lastReportLink=shortUrl;
-    // Save link back to active job — or auto-create one if started from inspection tab
-    if(!activeJobId){
-      const customer=document.getElementById('customer').value.trim();
-      const newJob={
-        id:Date.now(),
-        customer:customer||'Unnamed job',
-        po:document.getElementById('po').value.trim(),
-        pu:document.getElementById('pu').value.trim(),
-        destination:document.getElementById('destination').value.trim(),
-        grower:document.getElementById('grower').value.trim(),
-        location:document.getElementById('location').value.trim(),
-        qty:document.getElementById('qty-num').value.trim(),
-        label:document.getElementById('label').value.trim(),
-        inspector:document.getElementById('inspector-name').value.trim(),
-        date:document.getElementById('insp-date').value,
-        status:'report-sent',
-        reportLink:null,
-        bolSent:false,
-        createdAt:new Date().toISOString(),
-        inspectionData:null
-      };
-      jobs.unshift(newJob);
-      activeJobId=newJob.id;
-    }
-    const job=jobs.find(j=>j.id===activeJobId);
-    if(job){
-      job.reportLink=lastReportLink;
-      job.status='report-sent';
-      job.inspectionData={
-        product:curProd,
-        notes:document.getElementById('notes').value,
-        qty:document.getElementById('qty-num').value+' cases',
-        label:document.getElementById('label').value
-      };
-      saveJobs();
-    }
-    document.getElementById('share-sheet').style.display='block';
-    document.getElementById('link-preview').textContent=shortUrl;
-    st.textContent='';
-  }catch(e){
-    st.textContent='Error generating link. Please try again.';
-    console.error(e);
-  }finally{
-    btn.textContent='📤 Generate & share report';
-    btn.disabled=false;
+  if(PRODS[curProd].showColor&&selectedColors.size){
+    slabel('Color / maturity');const sorted=STAGES.filter(s=>selectedColors.has(s)),mn=sorted[0],mx=sorted[sorted.length-1];
+    const ct=mn===mx?`Color ${mn} — ${COLOR_LABELS[mn]}`:`Color ${mn} – ${mx}   (${COLOR_LABELS[mn]} to ${COLOR_LABELS[mx]})`;
+    doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(gray1);doc.text(ct,ml,y);y+=10;
   }
+
+  const tempVals=[...document.querySelectorAll('#temp-readings input')].map(i=>parseFloat(i.value)).filter(v=>!isNaN(v));
+  if(tempVals.length){
+    slabel('Pulp temperature');const mn=Math.min(...tempVals),mx=Math.max(...tempVals);
+    doc.setFontSize(16);doc.setFont('helvetica','bold');doc.setTextColor(blue);doc.text(mn===mx?`${mn}°F`:`${mn}–${mx}°F`,ml,y);
+    doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(gray3);doc.text(`Range across ${tempVals.length} pulp reading${tempVals.length>1?'s':''}`,ml,y+5);y+=13;
+  }
+
+  const valid=boxes.filter(b=>b.total>0);
+  if(valid.length){
+    slabel('Defects found');const avgCount=Math.round(valid.reduce((s,b)=>s+b.total,0)/valid.length);
+    doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(gray3);doc.text(`Average across ${valid.length} box sample${valid.length>1?'s':''}  ·  ~${avgCount} count per box`,ml,y);y+=6;
+    const defRows=PRODS[curProd].defects.map(d=>{const avg=valid.reduce((s,b)=>s+(b.total>0?(b.defects[d]||0)/b.total*100:0),0)/valid.length;return{d,avg};}).filter(r=>r.avg>0);
+    if(defRows.length){defRows.forEach(r=>{chk(8);doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(gray1);doc.text(r.d,ml,y);const col=r.avg>20?red:r.avg>10?amber:green;doc.setFont('helvetica','bold');doc.setTextColor(col);doc.text(`${r.avg.toFixed(1)}%`,ml+cw,y,{align:'right'});doc.setFillColor(r.avg>20?'#FCEBEB':r.avg>10?'#FAEEDA':'#EAF3DE');doc.roundedRect(ml+cw*0.4,y-3.5,Math.min(r.avg/30*cw*0.55,cw*0.55),4.5,1,1,'F');y+=6;line();});}
+    else{doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(gray3);doc.text('No defects recorded',ml,y);y+=7;}
+    y+=3;
+  }
+
+  const ct=parseInt(document.getElementById('cut-total').value)||0,ch=parseInt(document.getElementById('cut-hollow').value)||0;
+  if(ct>0&&PRODS[curProd].cutDefect){slabel(`${PRODS[curProd].cutDefect} — cut sample`);irow('Units cut',String(ct));irow('Hollow found',String(ch));irow('Hollow rate',`${(ch/ct*100).toFixed(1)}%`);y+=4;}
+
+  if(sizeJudgment){chk(14);slabel('Sizing judgment');const isF=sizeJudgment.includes('reject'),isC=sizeJudgment.includes('Borderline');doc.setFillColor(isF?'#FCEBEB':isC?'#FAEEDA':'#EAF3DE');doc.roundedRect(ml,y-3,cw,9,2,2,'F');doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(isF?red:isC?amber:green);doc.text(sizeJudgment,ml+5,y+2.5);y+=14;}
+
+  const allPhotos=PHOTO_SECS.map(s=>({sec:s,imgs:photoData[s]})).filter(g=>g.imgs.length);
+  if(allPhotos.length){
+    slabel('Photos');
+    for(const group of allPhotos){chk(12);doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(gray2);doc.text(group.sec,ml,y);y+=5;let px=ml;const iw=42,ih=32,gap=4;for(const src of group.imgs){if(px+iw>ml+cw){px=ml;y+=ih+gap;chk(ih+gap);}try{doc.addImage(src,'JPEG',px,y,iw,ih);}catch(e){doc.setFillColor('#eee');doc.rect(px,y,iw,ih,'F');}px+=iw+gap;}y+=ih+10;}
+  }
+
+  const notes=document.getElementById('notes').value;
+  if(notes){chk(20);slabel('Inspector notes');const lines=doc.splitTextToSize(notes,cw-8);const bh=Math.min(lines.length*5+8,60);doc.setFillColor('#f7f7f5');doc.roundedRect(ml,y-2,cw,bh,2,2,'F');doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(gray1);lines.slice(0,10).forEach((ln,i)=>doc.text(ln,ml+4,y+4+(i*5)));y+=bh+6;}
+
+  if(recJudgment){chk(22);slabel('Overall recommendation');const isF=recJudgment.includes('Fail'),isC=recJudgment.includes('Conditional');doc.setFillColor(isF?'#FCEBEB':isC?'#FAEEDA':'#EAF3DE');doc.roundedRect(ml,y-3,cw,14,2,2,'F');doc.setFontSize(12);doc.setFont('helvetica','bold');doc.setTextColor(isF?red:isC?amber:green);doc.text(recJudgment,ml+5,y+5.5);y+=20;}
+
+  chk(16);doc.setDrawColor('#bbb');doc.setLineWidth(0.3);doc.line(ml,y,ml+cw,y);y+=5;
+  const insp=document.getElementById('inspector-name').value||'Inspector';
+  doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(gray1);doc.text(insp,ml,y);
+  doc.setFont('helvetica','normal');doc.setTextColor(gray3);doc.text('Quality inspector  ·  Birdman Trading Co. Inc.',ml,y+5);
+  doc.text(dateStr,ml+cw,y,{align:'right'});
+
+  // IMPORTANT: return as Blob — doc.save() is never called here
+  // This means no blob URL is ever created or exposed outside this function
+  return doc.output('blob');
 }
 
-function buildShareMessage(link){
-  const data=collectReportData();
-  const rec=data.recJudgment||'(see report)';
-  const product=data.product||'product';
-  const customer=data.customer?' — '+data.customer:'';
-  const result=rec.includes('Pass')?'✅ '+rec:rec.includes('Fail')?'🚫 '+rec:'⚠️ '+rec;
-  const puLine=[data.pu?'PU# '+data.pu:'',data.destination].filter(Boolean).join(' · ');
-  return'*Birdman QC Report'+customer+'*'+(puLine?'\n'+puLine:'')+'\n\nProduct: '+product+'\nResult: '+result+'\n\n'+link;
-}
-
-function sendWhatsApp(){
-  if(!lastReportLink){generateLink();return;}
-  const msg=buildShareMessage(lastReportLink);
-  window.open('https://wa.me/?text='+encodeURIComponent(msg),'_blank');
-}
-
-function sendSMS(){
-  if(!lastReportLink){generateLink();return;}
-  const msg=buildShareMessage(lastReportLink);
-  window.open('sms:?body='+encodeURIComponent(msg));
-}
-
-function copyLink(){
-  if(!lastReportLink){generateLink();return;}
-  navigator.clipboard.writeText(lastReportLink).then(()=>{
-    const btn=document.getElementById('copy-btn');
-    if(btn){btn.textContent='Copied!';setTimeout(()=>btn.textContent='\u{1F4CB} Copy link',2000);}
-  }).catch(()=>{
-    // Fallback for older browsers
-    const ta=document.createElement('textarea');
-    ta.value=lastReportLink;document.body.appendChild(ta);ta.select();
-    document.execCommand('copy');document.body.removeChild(ta);
-    const btn=document.getElementById('copy-btn');
-    if(btn){btn.textContent='Copied!';setTimeout(()=>btn.textContent='\u{1F4CB} Copy link',2000);}
-  });
-}
-
-
-
-async function generatePDF(){
+async function sendPDF(){
+  const btn=document.getElementById('send-pdf-btn');
   const st=document.getElementById('pdf-status');
-  st.textContent='Generating PDF...';
+  btn.disabled=true;btn.textContent='Generating PDF...';st.textContent='';
+
   try{
-    const {jsPDF}=window.jspdf;
-    const doc=new jsPDF({unit:'mm',format:'a4'});
-    const ml=15,cw=180,ph=297;
-    let y=15;
-    const gray1='#1a1a1a',gray2='#555',gray3='#888',blue='#0C447C',green='#27500A',amber='#633806',red='#791F1F';
-
-    function chk(n){if(y+n>ph-15){doc.addPage();y=15;}}
-    function line(col){doc.setDrawColor(col||'#ddd');doc.setLineWidth(0.2);doc.line(ml,y,ml+cw,y);y+=3;}
-    function slabel(t){chk(8);doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(gray3);doc.text(t.toUpperCase(),ml,y);y+=5;}
-    function irow(l,v){if(!v)return;chk(7);doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(gray2);doc.text(l,ml,y);doc.setFont('helvetica','bold');doc.setTextColor(gray1);doc.text(String(v),ml+cw,y,{align:'right',maxWidth:cw*0.6});y+=6;line();}
-
-    doc.setFillColor(blue);doc.roundedRect(ml,y,cw,16,2,2,'F');
-    doc.setFontSize(14);doc.setFont('helvetica','bold');doc.setTextColor('#fff');doc.text('Quality Inspection Report',ml+6,y+6.5);
-    doc.setFontSize(9);doc.setFont('helvetica','normal');doc.text('Birdman Trading Co. Inc.',ml+6,y+12);
+    const pdfBlob=await buildPDFBlob();
+    const customer=document.getElementById('customer').value.trim()||'Report';
     const dateStr=document.getElementById('insp-date').value||new Date().toISOString().split('T')[0];
-    doc.text(dateStr,ml+cw,y+6.5,{align:'right'});
-    y+=22;
+    const filename=`BirdmanQC_${customer.replace(/\s+/g,'_')}_${dateStr}.pdf`;
 
-    slabel('Job info');
-    const prod=curProd==='custom'?(document.getElementById('custom-name').value||'Custom product'):{tomato:'Roma tomatoes',cucumber:'Slicer cucumber',strawberry:'Strawberry'}[curProd];
-    irow('Product',prod);
-    irow('Customer',document.getElementById('customer').value);
-    irow('Order #',document.getElementById('po').value);
-    irow('Destination',document.getElementById('destination').value);
-    irow('PU #',document.getElementById('pu').value);
-    irow('Grower / shipper',document.getElementById('grower').value);
-    irow('Location',document.getElementById('location').value);
-    const qtyNum=document.getElementById('qty-num').value;
-    irow('Qty ordered',qtyNum?qtyNum+' cases':'');
-    irow('Label',document.getElementById('label').value);
-    const szBtn=document.querySelector('.sz-btn.active');
-    if(szBtn)irow('Ordered size',szBtn.textContent.replace(/\s+/g,' ').trim());
-    if(curProd==='strawberry')irow('Pack format',document.getElementById('pack-fmt').value);
-    y+=4;
+    // Update job status
+    if(activeJobId){const job=jobs.find(j=>j.id===activeJobId);if(job){job.reportSent=true;job.status='report-sent';saveJobs();}}
 
-    if(PRODS[curProd].showColor&&selectedColors.size){
-      slabel('Color / maturity');
-      const sorted=STAGES.filter(s=>selectedColors.has(s)),mn=sorted[0],mx=sorted[sorted.length-1];
-      const ct=mn===mx?`Color ${mn} — ${COLOR_LABELS[mn]}`:`Color ${mn} – ${mx}   (${COLOR_LABELS[mn]} to ${COLOR_LABELS[mx]})`;
-      doc.setFontSize(11);doc.setFont('helvetica','bold');doc.setTextColor(gray1);doc.text(ct,ml,y);y+=10;
+    // PRIMARY PATH: Web Share API — opens native share sheet (WhatsApp, Messages, email, etc.)
+    // The PDF is passed as a real File object, never as a URL. Zero exposure risk.
+    if(navigator.canShare&&navigator.canShare({files:[new File([pdfBlob],'test.pdf',{type:'application/pdf'})]})){
+      const file=new File([pdfBlob],filename,{type:'application/pdf'});
+      await navigator.share({title:`QC Report — ${customer}`,text:`Birdman QC Report — ${customer} — ${dateStr}`,files:[file]});
+      st.textContent='✓ Report shared.';setTimeout(()=>st.textContent='',4000);
     }
-
-    const tempVals=[...document.querySelectorAll('#temp-readings input')].map(i=>parseFloat(i.value)).filter(v=>!isNaN(v));
-    if(tempVals.length){
-      slabel('Pulp temperature');
-      const mn=Math.min(...tempVals),mx=Math.max(...tempVals);
-      doc.setFontSize(16);doc.setFont('helvetica','bold');doc.setTextColor(blue);
-      doc.text(mn===mx?`${mn}°F`:`${mn}–${mx}°F`,ml,y);
-      doc.setFontSize(9);doc.setFont('helvetica','normal');doc.setTextColor(gray3);
-      doc.text(`Range across ${tempVals.length} pulp reading${tempVals.length>1?'s':''}`,ml,y+5);y+=13;
+    // FALLBACK: desktop or browser that doesn't support file sharing — download the PDF normally
+    else{
+      const url=URL.createObjectURL(pdfBlob);
+      const a=document.createElement('a');a.href=url;a.download=filename;
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      // Immediately revoke — the blob URL is destroyed after the download triggers
+      // It is never stored, never shared, never visible to the user
+      setTimeout(()=>URL.revokeObjectURL(url),3000);
+      st.textContent='✓ PDF downloaded — attach it in WhatsApp manually.';setTimeout(()=>st.textContent='',6000);
     }
-
-    const valid=boxes.filter(b=>b.total>0);
-    if(valid.length){
-      slabel('Defects found');
-      const avgCount=Math.round(valid.reduce((s,b)=>s+b.total,0)/valid.length);
-      doc.setFontSize(8);doc.setFont('helvetica','normal');doc.setTextColor(gray3);
-      doc.text(`Average across ${valid.length} box sample${valid.length>1?'s':''}  ·  ~${avgCount} count per box`,ml,y);y+=6;
-      const defRows=PRODS[curProd].defects.map(d=>{
-        const avg=valid.reduce((s,b)=>s+(b.total>0?(b.defects[d]||0)/b.total*100:0),0)/valid.length;
-        return{d,avg};
-      }).filter(r=>r.avg>0);
-      if(defRows.length){
-        defRows.forEach(r=>{
-          chk(8);
-          doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(gray1);doc.text(r.d,ml,y);
-          const col=r.avg>20?red:r.avg>10?amber:green;
-          doc.setFont('helvetica','bold');doc.setTextColor(col);doc.text(`${r.avg.toFixed(1)}%`,ml+cw,y,{align:'right'});
-          doc.setFillColor(r.avg>20?'#FCEBEB':r.avg>10?'#FAEEDA':'#EAF3DE');
-          doc.roundedRect(ml+cw*0.4,y-3.5,Math.min(r.avg/30*cw*0.55,cw*0.55),4.5,1,1,'F');
-          y+=6;line();
-        });
-      }else{
-        doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(gray3);doc.text('No defects recorded',ml,y);y+=7;
-      }
-      y+=3;
-    }
-
-    const ct=parseInt(document.getElementById('cut-total').value)||0,ch=parseInt(document.getElementById('cut-hollow').value)||0;
-    if(ct>0&&PRODS[curProd].cutDefect){
-      slabel(`${PRODS[curProd].cutDefect} — cut sample`);
-      irow('Units cut',String(ct));irow('Hollow found',String(ch));
-      irow('Hollow rate',`${(ch/ct*100).toFixed(1)}%`);y+=4;
-    }
-
-    if(sizeJudgment){
-      chk(14);slabel('Sizing judgment');
-      const isF=sizeJudgment.includes('reject'),isC=sizeJudgment.includes('Borderline');
-      doc.setFillColor(isF?'#FCEBEB':isC?'#FAEEDA':'#EAF3DE');doc.roundedRect(ml,y-3,cw,9,2,2,'F');
-      doc.setFontSize(10);doc.setFont('helvetica','bold');doc.setTextColor(isF?red:isC?amber:green);
-      doc.text(sizeJudgment,ml+5,y+2.5);y+=14;
-    }
-
-    const allPhotos=PHOTO_SECS.map(s=>({sec:s,imgs:photoData[s]})).filter(g=>g.imgs.length);
-    if(allPhotos.length){
-      slabel('Photos');
-      for(const group of allPhotos){
-        chk(12);doc.setFontSize(8);doc.setFont('helvetica','bold');doc.setTextColor(gray2);doc.text(group.sec,ml,y);y+=5;
-        let px=ml;const iw=42,ih=32,gap=4;
-        for(const src of group.imgs){
-          if(px+iw>ml+cw){px=ml;y+=ih+gap;chk(ih+gap);}
-          try{doc.addImage(src,'JPEG',px,y,iw,ih);}catch(e){doc.setFillColor('#eee');doc.rect(px,y,iw,ih,'F');}
-          px+=iw+gap;
-        }
-        y+=ih+10;
-      }
-    }
-
-    const notes=document.getElementById('notes').value;
-    if(notes){
-      chk(20);slabel('Inspector notes');
-      const lines=doc.splitTextToSize(notes,cw-8);
-      const bh=Math.min(lines.length*5+8,60);
-      doc.setFillColor('#f7f7f5');doc.roundedRect(ml,y-2,cw,bh,2,2,'F');
-      doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(gray1);
-      lines.slice(0,10).forEach((ln,i)=>doc.text(ln,ml+4,y+4+(i*5)));
-      y+=bh+6;
-    }
-
-    if(recJudgment){
-      chk(22);slabel('Overall recommendation');
-      const isF=recJudgment.includes('Fail'),isC=recJudgment.includes('Conditional');
-      doc.setFillColor(isF?'#FCEBEB':isC?'#FAEEDA':'#EAF3DE');doc.roundedRect(ml,y-3,cw,14,2,2,'F');
-      doc.setFontSize(12);doc.setFont('helvetica','bold');doc.setTextColor(isF?red:isC?amber:green);
-      doc.text(recJudgment,ml+5,y+5.5);y+=20;
-    }
-
-    chk(16);
-    doc.setDrawColor('#bbb');doc.setLineWidth(0.3);doc.line(ml,y,ml+cw,y);y+=5;
-    const insp=document.getElementById('inspector-name').value||'Inspector';
-    doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(gray1);doc.text(insp,ml,y);
-    doc.setFont('helvetica','normal');doc.setTextColor(gray3);doc.text('Quality inspector  ·  Birdman Trading Co. Inc.',ml,y+5);
-    doc.text(dateStr,ml+cw,y,{align:'right'});
-
-    const fn=`BirdmanQC_${(document.getElementById('customer').value||'Report').replace(/\s+/g,'_')}_${dateStr}.pdf`;
-    doc.save(fn);
-    st.textContent='PDF downloaded successfully.';
-    setTimeout(()=>st.textContent='',4000);
   }catch(err){
-    console.error(err);
-    st.textContent='Error generating PDF. Please try again.';
+    if(err.name==='AbortError'){st.textContent='Share cancelled.';}
+    else{console.error(err);st.textContent='Error generating PDF. Please try again.';}
+    setTimeout(()=>st.textContent='',4000);
+  }finally{
+    btn.disabled=false;btn.textContent='📤 Send PDF report';
   }
 }
 
